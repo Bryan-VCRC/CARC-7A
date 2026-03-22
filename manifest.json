@@ -1,0 +1,17 @@
+{
+  "name": "ISV Corrigan Crew Terminal",
+  "short_name": "CORRIGAN",
+  "description": "Crew terminal interface for the ISV Corrigan",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

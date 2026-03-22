@@ -1,0 +1,140 @@
+/* ============================================
+   CARC-7A — Panel-specific responsive styles
+   ============================================ */
+
+/* iPad landscape optimizations */
+@media (min-width: 768px) {
+  .inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .entry-list {
+    padding: 12px;
+  }
+
+  .entry-card {
+    padding: 16px 20px;
+  }
+
+  .detail-content {
+    padding: 24px 32px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .nav-tab {
+    flex-direction: row;
+    gap: 8px;
+    font-size: 12px;
+  }
+
+  .status-bar {
+    padding: 10px 24px;
+  }
+}
+
+/* iPad Pro / larger tablets */
+@media (min-width: 1024px) {
+  .inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  .media-grid {
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+
+  .detail-content {
+    padding: 32px 48px;
+  }
+
+  .viewer-content img,
+  .viewer-content video {
+    max-height: 70vh;
+  }
+}
+
+/* Classification markers for journal entries */
+.classification {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 2px;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  font-weight: 700;
+}
+
+.classification.classified {
+  background: var(--danger-glow);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+.classification.restricted {
+  background: rgba(255, 107, 53, 0.15);
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.classification.open {
+  background: var(--primary-glow);
+  color: var(--primary-dim);
+  border: 1px solid var(--primary-dim);
+}
+
+/* Distress signal styling */
+.entry-card.type-distress {
+  background: rgba(255, 51, 68, 0.05);
+  animation: distress-pulse 3s infinite;
+}
+
+@keyframes distress-pulse {
+  0%, 100% { border-left-color: var(--danger); }
+  50% { border-left-color: transparent; }
+}
+
+/* Status badges for items */
+.item-status {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 2px;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+
+.item-status.functional {
+  color: var(--primary);
+  border: 1px solid var(--primary-dim);
+}
+
+.item-status.damaged {
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
+.item-status.critical {
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
+
+/* Noise texture overlay on cards */
+.inv-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  opacity: 0.03;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+.inv-card {
+  position: relative;
+  overflow: hidden;
+}

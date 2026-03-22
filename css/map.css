@@ -1,0 +1,297 @@
+/* ============================================
+   CARC-7A — Ship Map Panel
+   Sci-fi interactive schematic viewer
+   ============================================ */
+
+/* Map container — fills the panel */
+.map-container {
+  position: relative;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  background: #060610;
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Viewport for pinch/zoom/pan */
+.map-viewport {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  cursor: grab;
+}
+
+.map-viewport:active {
+  cursor: grabbing;
+}
+
+.map-image {
+  position: absolute;
+  transform-origin: 0 0;
+  max-width: none;
+  max-height: none;
+  image-rendering: auto;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: filter 0.3s ease;
+}
+
+/* Scan line that sweeps vertically */
+.map-scanline {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent calc(var(--scan-y, 0%) - 2px),
+    rgba(0, 255, 157, 0.06) var(--scan-y, 0%),
+    transparent calc(var(--scan-y, 0%) + 2px),
+    transparent 100%
+  );
+  animation: map-scan 6s linear infinite;
+}
+
+@keyframes map-scan {
+  0%   { --scan-y: 0%; }
+  100% { --scan-y: 100%; }
+}
+
+/* Fallback for browsers without @property */
+@supports not (animation-timeline: auto) {
+  .map-scanline {
+    background: none;
+  }
+  .map-scanline::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: rgba(0, 255, 157, 0.08);
+    box-shadow: 0 0 20px 8px rgba(0, 255, 157, 0.03);
+    animation: scanline-sweep 6s linear infinite;
+  }
+}
+
+@keyframes scanline-sweep {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* Subtle grid overlay */
+.map-grid-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0.04;
+  background-image:
+    linear-gradient(rgba(0, 255, 157, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 255, 157, 0.5) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+/* HUD corner brackets */
+.map-hud-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  z-index: 6;
+  pointer-events: none;
+}
+
+.map-hud-tl {
+  top: 12px;
+  left: 12px;
+  border-top: 2px solid var(--primary-dim);
+  border-left: 2px solid var(--primary-dim);
+}
+
+.map-hud-tr {
+  top: 12px;
+  right: 12px;
+  border-top: 2px solid var(--primary-dim);
+  border-right: 2px solid var(--primary-dim);
+}
+
+.map-hud-bl {
+  bottom: 56px;
+  left: 12px;
+  border-bottom: 2px solid var(--primary-dim);
+  border-left: 2px solid var(--primary-dim);
+}
+
+.map-hud-br {
+  bottom: 56px;
+  right: 12px;
+  border-bottom: 2px solid var(--primary-dim);
+  border-right: 2px solid var(--primary-dim);
+}
+
+/* Map bottom status bar */
+.map-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  background: linear-gradient(transparent, rgba(6, 6, 16, 0.95));
+  z-index: 8;
+  pointer-events: none;
+}
+
+.map-status-item {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--primary-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.map-zoom-level {
+  color: var(--secondary);
+  font-size: 12px;
+  font-family: var(--font-display);
+  letter-spacing: 1px;
+}
+
+/* Map legend */
+.map-legend {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.map-legend-item {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 1.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.legend-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.legend-dot.alert {
+  background: var(--danger);
+  box-shadow: 0 0 6px var(--danger);
+  animation: pulse-dot 2s infinite;
+}
+
+.legend-dot.safe {
+  background: var(--primary);
+  box-shadow: 0 0 4px var(--primary-glow);
+}
+
+.legend-dot.restricted {
+  background: var(--warning);
+  box-shadow: 0 0 4px rgba(255, 107, 53, 0.4);
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+/* Reset button */
+.map-reset-btn {
+  position: absolute;
+  bottom: 48px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  padding: 8px 20px;
+  background: rgba(10, 10, 15, 0.8);
+  border: 1px solid var(--border-color);
+  color: var(--primary-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  opacity: 0;
+  transition: opacity 0.3s ease, border-color 0.2s ease;
+  pointer-events: none;
+  min-height: 40px;
+}
+
+.map-reset-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.map-reset-btn:active {
+  border-color: var(--primary);
+  background: rgba(0, 255, 157, 0.1);
+}
+
+/* Loading state */
+.map-container.loading .map-image {
+  opacity: 0;
+}
+
+.map-container.loading::before {
+  content: 'LOADING SCHEMATIC...';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--primary-dim);
+  letter-spacing: 3px;
+  animation: blink 1s step-end infinite;
+  z-index: 10;
+}
+
+/* Map reveal animation */
+.map-image.loaded {
+  animation: map-reveal 1.2s ease-out forwards;
+}
+
+@keyframes map-reveal {
+  0% {
+    opacity: 0;
+    filter: brightness(3) contrast(2) saturate(0);
+  }
+  40% {
+    opacity: 0.7;
+    filter: brightness(1.5) contrast(1.3) saturate(0.5);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+  }
+}
+
+/* Ambient glow on the map edges */
+.map-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 3;
+  box-shadow: inset 0 0 80px 20px rgba(0, 0, 0, 0.6);
+}
