@@ -1,0 +1,288 @@
+/* ============================================
+   CARC-7A — Two Player (Co-op) Terminal styles
+   Reuses palette, fonts, pips, ECG, inventory
+   cards + modal from main.css; adds the hotseat
+   vitals + per-player gear layout.
+   ============================================ */
+
+/* Status bar tweaks */
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+}
+
+.menu-back {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.menu-back:active,
+.menu-back:hover {
+  color: var(--primary);
+}
+
+/* Player + view toggles (two stacked nav rows) */
+.player-tabs .nav-tab {
+  min-height: 48px;
+}
+
+.tab-name {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.sub-tabs {
+  background: var(--bg-deep);
+}
+
+.sub-tabs .nav-tab {
+  min-height: 40px;
+  padding: 8px;
+  font-size: 11px;
+}
+
+/* Vitals content — vertical, scrollable wrapper inside the panel */
+.duo-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 18px calc(var(--safe-bottom) + 24px);
+  overflow-y: auto;
+}
+
+/* Monitor block */
+.duo-monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 4px;
+}
+
+.duo-content .health-monitor {
+  width: 220px;
+  height: 84px;
+}
+
+.duo-name-input {
+  width: 240px;
+  max-width: 80%;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-bright);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: 3px;
+  padding: 9px 12px;
+  text-transform: uppercase;
+  -webkit-user-select: text;
+  user-select: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.duo-name-input::placeholder {
+  color: var(--text-dim);
+  letter-spacing: 2px;
+}
+
+.duo-name-input:focus {
+  outline: none;
+  border-color: var(--primary-dim);
+  box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* Stat panels */
+.duo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+}
+
+.duo-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.duo-stat .stat-name { font-size: 18px; }
+.duo-stat .stat-numbers { font-size: 24px; }
+
+.duo-content .stat-pips { gap: 6px; }
+
+.duo-content .stat-pip {
+  flex: 1;
+  max-width: none;
+  height: 16px;
+  border-radius: 2px;
+}
+
+.duo-stat.flatline .stat-numbers { color: var(--danger); }
+
+/* Steppers */
+.duo-steppers {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.stepper-btn {
+  flex: 1;
+  min-height: 54px;
+  font-size: 26px;
+  font-family: var(--font-display);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+}
+
+.stepper-btn.plus { color: var(--primary); }
+.stepper-btn.minus { color: var(--danger); }
+.stepper-btn:active { transform: scale(0.97); }
+.stepper-btn.plus:active { background: var(--primary-glow); box-shadow: 0 0 12px var(--primary-glow); }
+.stepper-btn.minus:active { background: var(--danger-glow); box-shadow: 0 0 12px var(--danger-glow); }
+
+/* Gear panel — add button */
+.add-item-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--primary-dim);
+  color: var(--primary);
+  padding: 8px 14px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.add-item-btn:active {
+  background: var(--primary-glow);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+/* Discard item button (in detail view) */
+.discard-wrap { margin-top: 18px; }
+
+.discard-btn {
+  width: 100%;
+  padding: 14px;
+  background: var(--danger-glow);
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.discard-btn:active { background: rgba(255, 51, 68, 0.3); }
+
+/* Add item form modal */
+.form-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.form-modal.hidden { display: none; }
+
+.form-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.82);
+}
+
+.form-modal-box {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 88vh;
+  overflow-y: auto;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+  padding: 24px;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.form-modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 3px;
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.form-field span {
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
+
+.form-field input,
+.form-field select {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-bright);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  padding: 10px 12px;
+  width: 100%;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+  outline: none;
+  border-color: var(--primary-dim);
+}
+
+.form-sub {
+  border-left: 2px solid var(--border-color);
+  padding-left: 12px;
+  margin: 0 0 14px 2px;
+}
+
+.form-sub.hidden { display: none; }
+
+.form-modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 6px;
+}

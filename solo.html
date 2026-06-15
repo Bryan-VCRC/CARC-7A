@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ISV CORRIGAN">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon.svg">
+  <title>ISV CORRIGAN // CREW TERMINAL</title>
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/panels.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/fear.css">
+</head>
+<body>
+  <!-- Boot sequence overlay -->
+  <div id="boot-screen" class="boot-screen">
+    <div class="boot-text">
+      <pre id="boot-log"></pre>
+      <div class="boot-cursor">_</div>
+    </div>
+  </div>
+
+  <!-- CRT overlay effects -->
+  <div class="crt-overlay"></div>
+  <div class="scanlines"></div>
+  <div class="fear-static"></div>
+  <div class="blackout-overlay" id="blackout-overlay"></div>
+  <div class="reboot-overlay" id="reboot-overlay">
+    <div class="reboot-text">SYSTEM FAILURE</div>
+    <div class="reboot-sub">EMERGENCY REBOOT IN PROGRESS</div>
+    <div class="reboot-progress"><div class="reboot-progress-bar" id="reboot-bar"></div></div>
+    <div class="reboot-sub" style="margin-top: 16px;">DO NOT POWER OFF</div>
+  </div>
+
+  <!-- Main app shell -->
+  <div id="app" class="app hidden">
+    <!-- Top status bar -->
+    <header class="status-bar">
+      <div class="status-left">
+        <span class="ship-name">ISV CORRIGAN</span>
+        <span class="separator">//</span>
+        <span class="status-label">CREW TERMINAL v2.4.1</span>
+      </div>
+      <div class="status-right">
+        <span id="clock" class="clock"></span>
+        <span class="separator">|</span>
+        <span class="status-indicator online">SYS ONLINE</span>
+        <button id="reset-game-btn" class="reset-game-btn" aria-label="Reset Game">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="1 4 1 10 7 10"/>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Player stats bar -->
+    <div class="player-bar" id="player-bar">
+      <div class="health-monitor" id="health-monitor">
+        <canvas id="ecg-canvas" width="120" height="50"></canvas>
+        <div class="monitor-label" id="monitor-label">FINE</div>
+      </div>
+      <div class="player-stats">
+        <div class="player-stat stat-wounds wound-clickable" id="wounds-trigger">
+          <div class="stat-header">
+            <span class="stat-name">WOUNDS</span>
+            <span class="stat-numbers"><span id="stat-wounds">0</span><span class="stat-sep">/</span><span id="stat-wounds-max">3</span></span>
+          </div>
+          <div class="stat-pips" id="pips-wounds"></div>
+        </div>
+        <div class="player-stat stat-hp">
+          <div class="stat-header">
+            <span class="stat-name">HP</span>
+            <span class="stat-numbers"><span id="stat-hp">6</span><span class="stat-sep">/</span><span id="stat-hp-max">6</span></span>
+          </div>
+          <div class="stat-pips" id="pips-hp"></div>
+        </div>
+        <div class="player-stat stat-stress">
+          <div class="stat-header">
+            <span class="stat-name">STRESS</span>
+            <span class="stat-numbers"><span id="stat-stress">0</span><span class="stat-sep">/</span><span id="stat-stress-max">6</span></span>
+          </div>
+          <div class="stat-pips" id="pips-stress"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation tabs -->
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-panel="journal" aria-label="Journal">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <span>JOURNAL</span>
+      </button>
+      <button class="nav-tab" data-panel="inventory" aria-label="Inventory">
+        <svg class="tab-icon" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>CARGO</span>
+      </button>
+      <button class="nav-tab" data-panel="map" aria-label="Ship Map">
+        <svg class="tab-icon" viewBox="0 0 24 24"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/></svg>
+        <span>MAP</span>
+      </button>
+      <button class="nav-tab" data-panel="media" aria-label="Media Archives">
+        <svg class="tab-icon" viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg>
+        <span>ARCHIVES</span>
+      </button>
+    </nav>
+
+    <!-- Content panels -->
+    <main class="content">
+      <!-- JOURNAL PANEL -->
+      <section id="panel-journal" class="panel active">
+        <div class="panel-header">
+          <h2><span class="flicker">&#9646;</span> SHIP JOURNAL // CREW MEMOS</h2>
+          <div class="panel-controls">
+            <select id="journal-filter" class="sci-select">
+              <option value="all">ALL ENTRIES</option>
+              <option value="memo">CREW MEMOS</option>
+              <option value="clue">CLUES</option>
+              <option value="log">DAY LOGS</option>
+              <option value="document">DOCUMENTS</option>
+              <option value="distress">DISTRESS</option>
+            </select>
+          </div>
+        </div>
+        <div id="journal-list" class="entry-list"></div>
+        <!-- Journal detail view -->
+        <div id="journal-detail" class="detail-view hidden">
+          <button class="back-btn" data-back="journal">&#9664; BACK TO INDEX</button>
+          <div id="journal-detail-content" class="detail-content"></div>
+        </div>
+      </section>
+
+      <!-- INVENTORY PANEL -->
+      <section id="panel-inventory" class="panel">
+        <div class="panel-header">
+          <h2><span class="flicker">&#9646;</span> CARGO MANIFEST</h2>
+          <div class="panel-controls">
+            <select id="inventory-filter" class="sci-select">
+              <option value="all">ALL ITEMS</option>
+              <option value="weapon">WEAPONS</option>
+              <option value="tool">TOOLS</option>
+              <option value="medical">MEDICAL</option>
+              <option value="armor">ARMOR</option>
+              <option value="consumable">CONSUMABLES</option>
+              <option value="keyitem">KEY ITEMS</option>
+              <option value="misc">MISC</option>
+            </select>
+          </div>
+        </div>
+        <div id="inventory-grid" class="inventory-grid"></div>
+        <!-- Item detail view -->
+        <div id="inventory-detail" class="detail-view hidden">
+          <button class="back-btn" data-back="inventory">&#9664; BACK TO MANIFEST</button>
+          <div id="inventory-detail-content" class="detail-content"></div>
+        </div>
+      </section>
+
+      <!-- MAP PANEL -->
+      <section id="panel-map" class="panel">
+        <div class="map-container">
+          <!-- Scan line animation overlay -->
+          <div class="map-scanline"></div>
+          <!-- Grid overlay -->
+          <div class="map-grid-overlay"></div>
+          <!-- The map image — pinch/zoom/pan enabled -->
+          <div id="map-viewport" class="map-viewport">
+            <img id="map-image" class="map-image" src="data/media/ship-map.svg" alt="ISV Corrigan — Deck Layout" draggable="false">
+          </div>
+          <!-- Map HUD corners -->
+          <div class="map-hud-tl map-hud-corner"></div>
+          <div class="map-hud-tr map-hud-corner"></div>
+          <div class="map-hud-bl map-hud-corner"></div>
+          <div class="map-hud-br map-hud-corner"></div>
+          <!-- Map status bar -->
+          <div class="map-status">
+            <span class="map-status-item">DECK SCHEMATIC // ISV CORRIGAN</span>
+            <span class="map-status-item map-zoom-level" id="map-zoom-display">1.0x</span>
+          </div>
+          <!-- Map legend -->
+          <div class="map-legend">
+            <div class="map-legend-item"><span class="legend-dot alert"></span>ALERT</div>
+            <div class="map-legend-item"><span class="legend-dot safe"></span>ACCESSIBLE</div>
+            <div class="map-legend-item"><span class="legend-dot restricted"></span>RESTRICTED</div>
+          </div>
+          <!-- Reset zoom button -->
+          <button id="map-reset" class="map-reset-btn">RESET VIEW</button>
+        </div>
+      </section>
+
+      <!-- MEDIA ARCHIVES PANEL -->
+      <section id="panel-media" class="panel">
+        <div class="panel-header">
+          <h2><span class="flicker">&#9646;</span> SENSOR ARCHIVES</h2>
+          <div class="panel-controls">
+            <select id="media-filter" class="sci-select">
+              <option value="all">ALL FILES</option>
+              <option value="image">IMAGES</option>
+              <option value="video">VIDEO</option>
+            </select>
+          </div>
+        </div>
+        <div id="media-grid" class="media-grid"></div>
+        <!-- Media viewer -->
+        <div id="media-viewer" class="detail-view media-viewer hidden">
+          <button class="back-btn" data-back="media">&#9664; BACK TO ARCHIVES</button>
+          <div id="media-viewer-content" class="viewer-content"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Bottom status -->
+    <footer class="footer-bar">
+      <span class="footer-text">WARDEN PROTOCOL ACTIVE</span>
+      <span class="footer-text"><span id="entry-count">0</span> RECORDS LOADED</span>
+    </footer>
+  </div>
+
+  <!-- Reset confirmation modal -->
+  <div id="reset-modal" class="reset-modal hidden">
+    <div class="reset-modal-backdrop"></div>
+    <div class="reset-modal-box">
+      <div class="reset-modal-icon">&#9888;</div>
+      <div class="reset-modal-title">CONFIRM SYSTEM RESET</div>
+      <div class="reset-modal-text">All progress will be lost. Ammo, consumables, and inventory will revert to default state.</div>
+      <div class="reset-modal-text dim">This action cannot be undone.</div>
+      <div class="reset-modal-actions">
+        <button id="reset-cancel" class="reset-modal-btn cancel">ABORT</button>
+        <button id="reset-confirm" class="reset-modal-btn confirm">WIPE &amp; RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Death overlay -->
+  <div id="death-overlay" class="death-overlay hidden">
+    <div class="death-text">CREW MEMBER</div>
+    <div class="death-text-big">DECEASED</div>
+    <div class="death-sub">TERMINAL LOCKED</div>
+  </div>
+
+  <!-- Wound log modal -->
+  <div id="wound-modal" class="wound-modal hidden">
+    <div class="wound-modal-backdrop"></div>
+    <div class="wound-modal-box">
+      <div class="wound-modal-title">WOUND LOG</div>
+      <div id="wound-log-list" class="wound-log-list">
+        <div class="wound-log-empty">No wounds recorded.</div>
+      </div>
+      <button id="wound-modal-close" class="wound-modal-close">CLOSE</button>
+    </div>
+  </div>
+
+  <script src="js/audio.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
