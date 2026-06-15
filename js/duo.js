@@ -65,8 +65,11 @@
   }
 
   function makePlayer() {
-    return { name: "", hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax, inventory: starterKit() };
+    return { name: "", portrait: null, hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax, inventory: starterKit() };
   }
+
+  // Portrait list (URLs), loaded from the server's /api/portraits endpoint.
+  var PORTRAITS = [];
 
   // --- State ---
   const STATE = {
@@ -98,6 +101,7 @@
       data.players.slice(0, 2).forEach(function (saved, i) {
         const p = STATE.players[i];
         if (typeof saved.name === "string") p.name = saved.name;
+        if (typeof saved.portrait === "string") p.portrait = saved.portrait;
         ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
           if (typeof saved[k] === "number") p[k] = saved[k];
         });
@@ -211,11 +215,15 @@
     return '' +
       '<section class="player-col" data-player="' + idx + '">' +
       '<div class="col-head">' +
+      '<button class="col-portrait" id="col-portrait-' + idx + '" aria-label="Choose portrait">' +
+      '<img class="portrait-img" id="portrait-img-' + idx + '" alt="" draggable="false" hidden>' +
+      '<span class="portrait-ph" id="portrait-ph-' + idx + '">TAP<br>TO SET</span>' +
+      '</button>' +
+      '<button class="duo-name-btn" id="name-btn-' + idx + '">PLAYER ' + (idx + 1) + '</button>' +
       '<div class="health-monitor" id="health-monitor-' + idx + '">' +
       '<canvas id="ecg-canvas-' + idx + '" width="120" height="50"></canvas>' +
       '<div class="monitor-label" id="monitor-label-' + idx + '">STABLE</div>' +
       '</div>' +
-      '<input id="player-name-input-' + idx + '" class="duo-name-input" maxlength="16" placeholder="ENTER NAME" aria-label="Player name" autocomplete="off">' +
       '</div>' +
       '<nav class="nav-tabs sub-tabs col-tabs">' +
       '<button class="nav-tab active" data-view="vitals" data-player="' + idx + '"><span>VITALS</span></button>' +
@@ -365,9 +373,19 @@
     });
     document.getElementById("panel-vitals-" + idx).classList.toggle("active", STATE.view[idx] === "vitals");
     document.getElementById("panel-gear-" + idx).classList.toggle("active", STATE.view[idx] === "gear");
-    // Name input
-    var input = document.getElementById("player-name-input-" + idx);
-    if (input && document.activeElement !== input) input.value = STATE.players[idx].name || "";
+    renderIdentity(idx);
+  }
+
+  function renderIdentity(idx) {
+    var p = STATE.players[idx];
+    var nameBtn = document.getElementById("name-btn-" + idx);
+    if (nameBtn) nameBtn.textContent = displayName(idx);
+    var img = document.getElementById("portrait-img-" + idx);
+    var ph = document.getElementById("portrait-ph-" + idx);
+    if (img && ph) {
+      if (p.portrait) { img.src = p.portrait; img.hidden = false; ph.hidden = true; }
+      else { img.hidden = true; img.removeAttribute("src"); ph.hidden = false; }
+    }
   }
 
   // --- Inventory: grid (scoped to a player's column) ---
@@ -512,7 +530,10 @@
     const a = item.ammo;
     if (a.spareMags <= 0) { SFX.empty(); logToEl(container, "ammo-log", "NO SPARE " + a.spareLabel.toUpperCase()); return; }
     if (a.current === a.magCapacity) { logToEl(container, "ammo-log", a.magLabel.toUpperCase() + " ALREADY FULL"); return; }
-    SFX.reload();
+    // Mag-fed weapons (e.g. carbine) reload with the rifle sound; revolver-style
+    // cylinders keep the revolver reload.
+    if (/mag/i.test(a.magLabel || "") && SFX.reloadRifle) SFX.reloadRifle();
+    else SFX.reload();
     const oldRounds = a.current;
     a.spareMags--;
     a.current = a.magCapacity;
@@ -951,14 +972,82 @@
     });
   }
 
-  function initNameInputs() {
+  // --- Identity picker (portrait carousel + name) ---
+  var identityPlayer = 0; // which player the modal is editing
+  var pcIndex = 0;        // current carousel position
+
+  function loadPortraits() {
+    if (!window.fetch) return;
+    fetch("/api/portraits")
+      .then(function (r) { return r.json(); })
+      .then(function (list) { if (Array.isArray(list)) PORTRAITS = list; })
+      .catch(function () { /* no server / no portraits — picker shows empty */ });
+  }
+
+  function renderCarousel() {
+    var img = document.getElementById("pc-img");
+    var empty = document.getElementById("pc-empty");
+    var count = document.getElementById("pc-count");
+    if (!PORTRAITS.length) {
+      img.hidden = true; empty.classList.remove("hidden"); count.textContent = "0 / 0";
+      return;
+    }
+    empty.classList.add("hidden");
+    pcIndex = (pcIndex % PORTRAITS.length + PORTRAITS.length) % PORTRAITS.length;
+    img.src = PORTRAITS[pcIndex];
+    img.hidden = false;
+    count.textContent = (pcIndex + 1) + " / " + PORTRAITS.length;
+  }
+
+  // Apply the currently-shown portrait to the player being edited (live).
+  function applyPortrait() {
+    if (!PORTRAITS.length) return;
+    STATE.players[identityPlayer].portrait = PORTRAITS[pcIndex];
+    renderIdentity(identityPlayer);
+    save();
+    if (window.GameSync) GameSync.send(snapshot());
+  }
+
+  function navPortrait(dir) {
+    if (!PORTRAITS.length) return;
+    pcIndex += dir;
+    renderCarousel();
+    applyPortrait();
+  }
+
+  function openIdentity(idx) {
+    identityPlayer = idx;
+    var p = STATE.players[idx];
+    document.getElementById("identity-name").value = p.name || "";
+    pcIndex = p.portrait ? Math.max(0, PORTRAITS.indexOf(p.portrait)) : 0;
+    renderCarousel(); // preview only — opening doesn't change the saved portrait
+    SFX.select();
+    document.getElementById("identity-modal").classList.remove("hidden");
+  }
+
+  function closeIdentity() {
+    document.getElementById("identity-modal").classList.add("hidden");
+  }
+
+  function initIdentity() {
+    // Open from either the portrait or the name button on each card
     [0, 1].forEach(function (idx) {
-      var input = document.getElementById("player-name-input-" + idx);
-      input.addEventListener("input", function () {
-        STATE.players[idx].name = input.value;
-        save();
-        if (window.GameSync) GameSync.send(snapshot());
-      });
+      document.getElementById("col-portrait-" + idx).addEventListener("click", function () { openIdentity(idx); });
+      document.getElementById("name-btn-" + idx).addEventListener("click", function () { openIdentity(idx); });
+    });
+
+    var modal = document.getElementById("identity-modal");
+    modal.querySelector(".pc-prev").addEventListener("click", function () { navPortrait(-1); });
+    modal.querySelector(".pc-next").addEventListener("click", function () { navPortrait(1); });
+    modal.querySelector(".identity-backdrop").addEventListener("click", function () { SFX.back(); closeIdentity(); });
+    document.getElementById("identity-done").addEventListener("click", function () { SFX.back(); closeIdentity(); });
+
+    var nameInput = document.getElementById("identity-name");
+    nameInput.addEventListener("input", function () {
+      STATE.players[identityPlayer].name = nameInput.value;
+      renderIdentity(identityPlayer);
+      save();
+      if (window.GameSync) GameSync.send(snapshot());
     });
   }
 
@@ -982,7 +1071,8 @@
     startClock();
     initEcgMonitors();
     initToggles();
-    initNameInputs();
+    initIdentity();
+    loadPortraits();
     renderAll();
     initSync();
   }

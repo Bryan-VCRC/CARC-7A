@@ -404,7 +404,8 @@
       return;
     }
 
-    SFX.reload();
+    if (/mag/i.test(a.magLabel || "") && SFX.reloadRifle) SFX.reloadRifle();
+    else SFX.reload();
     const oldRounds = a.current;
     a.spareMags--;
     a.current = a.magCapacity;

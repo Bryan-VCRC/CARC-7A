@@ -456,6 +456,10 @@
   preloadSample("empty", "data/media/soundeffects/gun_empty.wav");
   preloadSample("heal", "data/media/soundeffects/heal.mp3");
   preloadSample("eat", "data/media/soundeffects/eating.aiff");
+  preloadSample("rifleReload", "data/media/soundeffects/rifle_reload.wav");
+
+  // --- Rifle reload: mag-fed weapons (falls back to the revolver reload) ---
+  function playRifleReload() { if (!playSample("rifleReload", 0.9)) playReload(); }
 
   // --- Heal: medkit recording (falls back to the generic use blip) ---
   function playHeal() { if (!playSample("heal", 0.8)) playUse(); }
@@ -485,6 +489,7 @@
     reload: playReload,
     empty: playEmpty,
     use: playUse,
+    reloadRifle: playRifleReload,
     heal: playHeal,
     eat: playEat,
     fearStart: playFearStart,

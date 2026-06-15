@@ -61,6 +61,27 @@
     </footer>
   </div>
 
+  <!-- Crew identity picker: portrait carousel + name -->
+  <div id="identity-modal" class="identity-modal hidden">
+    <div class="identity-backdrop"></div>
+    <div class="identity-box">
+      <div class="identity-title">CREW IDENTITY</div>
+      <div class="portrait-carousel">
+        <button class="pc-nav pc-prev" aria-label="Previous portrait">&#9664;</button>
+        <div class="pc-stage">
+          <img id="pc-img" class="pc-img" alt="" draggable="false">
+          <div id="pc-empty" class="pc-empty hidden">NO PORTRAITS FOUND</div>
+        </div>
+        <button class="pc-nav pc-next" aria-label="Next portrait">&#9654;</button>
+      </div>
+      <div class="pc-index"><span id="pc-count">0 / 0</span></div>
+      <input id="identity-name" class="duo-name-input" maxlength="16" placeholder="ENTER NAME" autocomplete="off">
+      <div class="identity-actions">
+        <button id="identity-done" class="identity-btn confirm">DONE</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/sync.js"></script>
   <script src="js/audio.js"></script>
   <script src="js/duo.js"></script>

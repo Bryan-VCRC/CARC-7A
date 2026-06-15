@@ -28,7 +28,26 @@ const MIME = {
 };
 
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, req.url === "/" ? "index.html" : req.url);
+  // Decode %20 etc. and drop any query string (e.g. cache-busters)
+  let urlPath;
+  try { urlPath = decodeURIComponent(req.url.split("?")[0]); }
+  catch (e) { urlPath = req.url.split("?")[0]; }
+
+  // Dynamic portrait listing — lets the player picker enumerate /portraits
+  // without renaming files or maintaining a manifest.
+  if (urlPath === "/api/portraits") {
+    fs.readdir(path.join(__dirname, "portraits"), (err, files) => {
+      const list = err ? [] : files
+        .filter((f) => /\.(png|jpe?g|webp|gif)$/i.test(f))
+        .sort()
+        .map((f) => "/portraits/" + encodeURIComponent(f));
+      res.writeHead(200, { "Content-Type": "application/json", "Cache-Control": "no-store" });
+      res.end(JSON.stringify(list));
+    });
+    return;
+  }
+
+  let filePath = path.join(__dirname, urlPath === "/" ? "index.html" : urlPath);
 
   // Prevent directory traversal
   if (!filePath.startsWith(__dirname)) {
