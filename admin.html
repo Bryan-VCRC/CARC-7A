@@ -1115,8 +1115,12 @@
       stats: { "Beam": "High intensity", "Condition": "Functional" } },
     { type: "medical", name: "First Aid Kit", icon: "icons/items/firstaid.svg", quantity: 1,
       description: "Bandages, sealant foam, a basic stimshot. Buys time.",
-      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL 1d5", depletedMsg: "KIT EMPTY" },
-      stats: { "Heals": "1d5 Health per use", "Contents": "Bandages, foam sealant, stimshot" } },
+      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL d5", depletedMsg: "KIT EMPTY" },
+      stats: { "Heals": "Roll d5 — GM applies", "Contents": "Bandages, foam sealant, stimshot" } },
+    { type: "medical", name: "Defibrillator", icon: "icons/items/firstaid.svg", quantity: 1,
+      description: "Two paddles and a prayer. Jump-starts a downed crewmate.",
+      consumable: { current: 2, max: 2, unit: "charges", perUse: 1, verb: "SHOCK", useLabel: "DEFIB", depletedMsg: "BATTERY DEAD" },
+      stats: { "Use": "Revive a downed ally — roll d3, GM applies", "Note": "Cannot be used on yourself" } },
     { type: "consumable", name: "Combat Stim", icon: "icons/items/stim.svg", quantity: 1,
       description: "One use. Keeps you moving when your body says stop. You'll feel it later.",
       consumable: { current: 1, max: 1, unit: "dose", perUse: 1, verb: "INJECT", useLabel: "INJECT STIM", depletedMsg: "STIM SPENT" },
@@ -1271,14 +1275,27 @@
       coopLink.innerHTML = "&#9679; TERMINAL LINK: " + (online ? "ONLINE" : "OFFLINE");
     });
     GameSync.onMessage(function (msg) {
-      if (!msg || msg.type !== "coop-state" || !Array.isArray(msg.players)) return;
-      msg.players.slice(0, 2).forEach(function (p, i) {
-        if (typeof p.name === "string") coop[i].name = p.name;
-        ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
-          if (typeof p[k] === "number") coop[i][k] = p[k];
+      if (!msg) return;
+
+      // A player used a heal/revive item — GM rolls the physical die and applies HP.
+      if (msg.type === "coop-heal") {
+        var who = (coop[msg.user] && coop[msg.user].name) || ("P" + (msg.user + 1));
+        var tgt = (coop[msg.target] && coop[msg.target].name) || ("P" + (msg.target + 1));
+        var die = (msg.die || "d?").toUpperCase();
+        var verb = msg.revive ? "REVIVE" : "HEAL";
+        log("\u{1F3B2} " + who + " used " + msg.item + " on " + tgt + " — roll " + die + ", " + verb + " " + tgt, "warn");
+        return;
+      }
+
+      if (msg.type === "coop-state" && Array.isArray(msg.players)) {
+        msg.players.slice(0, 2).forEach(function (p, i) {
+          if (typeof p.name === "string") coop[i].name = p.name;
+          ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
+            if (typeof p[k] === "number") coop[i][k] = p[k];
+          });
         });
-      });
-      renderCoopValues();
+        renderCoopValues();
+      }
     });
     GameSync.init("admin");
     // Pull current vitals from the terminal (covers same-browser BroadcastChannel too)

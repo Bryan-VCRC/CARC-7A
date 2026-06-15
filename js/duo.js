@@ -266,7 +266,7 @@
   }
 
   function hpState(hp, hpMax) {
-    if (hp <= 0) return { color: "#ff3344", glow: "rgba(255, 51, 68, 0.5)", label: "FLATLINE", speed: 0 };
+    if (hp <= 0) return { color: "#ff3344", glow: "rgba(255, 51, 68, 0.5)", label: "PASSED OUT", speed: 0 };
     var frac = hp / hpMax;
     if (frac > 0.66) return { color: "#00ff9d", glow: "rgba(0, 255, 157, 0.4)", label: "STABLE", speed: 1.0 };
     if (frac > 0.33) return { color: "#ffcc00", glow: "rgba(255, 204, 0, 0.4)", label: "CAUTION", speed: 1.4 };
@@ -446,7 +446,7 @@
     }
 
     let ammoHtml = item.ammo ? buildAmmoPanel(item) : "";
-    let consumableHtml = item.consumable ? buildConsumablePanel(item) : "";
+    let consumableHtml = item.consumable ? buildConsumablePanel(item, idx) : "";
 
     content.innerHTML = '' +
       '<div class="doc-header">' +
@@ -600,15 +600,104 @@
     setTimeout(function () { el.classList.remove("flash-warn"); }, 400);
   }
 
+  // --- Support items (heal / revive) ---
+  // Healing is rolled on a PHYSICAL die and applied by the GM. Using an item
+  // only consumes it (from the user) and tells the GM which die to roll.
+  //   die: which die to roll · self/ally: who it can target ·
+  //   allyOnlyWhenDown: ally target must be passed out (revive only)
+  var SUPPORT = {
+    "First Aid Kit": { die: "d5", self: true, ally: true },                          // heals most
+    "Combat Stim":   { die: "d3", self: true, ally: true },                          // anytime, lighter
+    "Defibrillator": { die: "d3", self: false, ally: true, allyOnlyWhenDown: true }, // revive a downed ally
+  };
+  function supportFor(item) { return (item && SUPPORT[item.name]) || null; }
+
+  function allyUsable(cfg, other, uses) {
+    if (uses <= 0) return false;
+    if (cfg.allyOnlyWhenDown) return other.hp <= 0;
+    return other.hp < other.hpMax; // heal anyone not at full (includes downed)
+  }
+  function selfUsable(cfg, self, uses) {
+    return cfg.self && uses > 0 && self.hp < self.hpMax;
+  }
+
+  function useSupport(userIdx, item, container, who) {
+    var cfg = supportFor(item);
+    if (!cfg) return;
+    var c = item.consumable;
+    if (c.current <= 0) {
+      SFX.empty();
+      logToEl(container, "consumable-log", c.depletedMsg);
+      var el = container.querySelector(".consumable-count");
+      if (el) { el.classList.add("flash-warn"); setTimeout(function () { el.classList.remove("flash-warn"); }, 400); }
+      return;
+    }
+
+    var targetIdx = who === "ally" ? (1 - userIdx) : userIdx;
+    var target = STATE.players[targetIdx];
+
+    if (who === "ally") {
+      if (!cfg.ally) return;
+      if (cfg.allyOnlyWhenDown && target.hp > 0) { logToEl(container, "consumable-log", displayName(targetIdx) + " IS NOT DOWN"); return; }
+    } else if (!cfg.self) {
+      return;
+    }
+
+    // Consume from the user's item; the actual HP is a physical roll the GM applies.
+    c.current -= c.perUse;
+    consumableSound(item);
+    var verb = target.hp <= 0 ? "REVIVE" : "HEAL";
+    logToEl(container, "consumable-log", verb + " " + displayName(targetIdx) + " — ROLL " + cfg.die.toUpperCase() + ", GM APPLIES");
+    updateConsumableDisplay(item, container);
+    refreshSupportButtons(userIdx, item, container);
+    if (window.GameSync) {
+      GameSync.send({ type: "coop-heal", user: userIdx, target: targetIdx, item: item.name, die: cfg.die, revive: target.hp <= 0 });
+    }
+    save();
+    if (navigator.vibrate) navigator.vibrate([15, 50, 15]);
+  }
+
+  function refreshSupportButtons(idx, item, container) {
+    var cfg = supportFor(item);
+    if (!cfg) return;
+    var c = item.consumable;
+    var self = STATE.players[idx], other = STATE.players[1 - idx];
+    var selfBtn = container.querySelector('[data-action="use-self"]');
+    if (selfBtn) selfBtn.disabled = !selfUsable(cfg, self, c.current);
+    var allyBtn = container.querySelector('[data-action="use-ally"]');
+    if (allyBtn) {
+      allyBtn.disabled = !allyUsable(cfg, other, c.current);
+      allyBtn.textContent = (other.hp <= 0 ? "REVIVE " : "USE ON ") + displayName(1 - idx) + " (" + cfg.die.toUpperCase() + ")";
+    }
+  }
+
   // --- Inventory: consumables ---
-  function buildConsumablePanel(item) {
+  function buildConsumablePanel(item, idx) {
     const c = item.consumable;
     const emptyClass = c.current === 0 ? " ammo-empty" : "";
     const lowClass = c.current > 0 && c.current <= Math.ceil(c.max * 0.25) ? " ammo-low" : "";
-    const disabled = c.current <= 0 ? " disabled" : "";
 
     let pipsHtml = "";
     for (let i = 0; i < c.max; i++) pipsHtml += '<div class="consumable-pip' + (i < c.current ? " filled" : "") + '"></div>';
+
+    var cfg = supportFor(item);
+    var actions = "";
+    if (cfg) {
+      var self = STATE.players[idx], other = STATE.players[1 - idx];
+      if (cfg.self) {
+        actions += '<button class="weapon-action-btn use-self-btn" data-action="use-self"' +
+          (selfUsable(cfg, self, c.current) ? "" : " disabled") + '>USE ON SELF (' + cfg.die.toUpperCase() + ')</button>';
+      }
+      if (cfg.ally) {
+        var aLabel = (other.hp <= 0 ? "REVIVE " : "USE ON ") + displayName(1 - idx) + " (" + cfg.die.toUpperCase() + ")";
+        actions += '<button class="weapon-action-btn use-ally-btn" data-action="use-ally"' +
+          (allyUsable(cfg, other, c.current) ? "" : " disabled") + '>' + aLabel + '</button>';
+      }
+    } else {
+      actions += '<button class="weapon-action-btn use-btn" data-action="use"' +
+        (c.current <= 0 ? " disabled" : "") + '>' + c.useLabel + '</button>';
+    }
+    actions += '<button class="weapon-action-btn found-btn" data-action="found-supply">+ FOUND ' + c.unit.toUpperCase() + '</button>';
 
     return '' +
       '<div class="ammo-panel">' +
@@ -618,17 +707,18 @@
       '<span class="ammo-sep">/</span><span class="ammo-cap">' + c.max + '</span></div>' +
       '<div class="ammo-label">' + c.unit.toUpperCase() + '</div></div>' +
       '<div class="consumable-pips">' + pipsHtml + '</div>' +
-      '<div class="weapon-actions">' +
-      '<button class="weapon-action-btn use-btn" data-action="use"' + disabled + '>' + c.useLabel + '</button>' +
-      '<button class="weapon-action-btn found-btn" data-action="found-supply">+ FOUND ' + c.unit.toUpperCase() + '</button>' +
+      '<div class="weapon-actions">' + actions +
       '</div><div class="ammo-log consumable-log"></div></div>';
   }
 
   function wireConsumableActions(idx, item, container) {
     container.querySelectorAll("[data-action]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        if (btn.dataset.action === "use") useConsumable(idx, item, container);
-        else if (btn.dataset.action === "found-supply") foundSupply(idx, item);
+        var a = btn.dataset.action;
+        if (a === "use") useConsumable(idx, item, container);
+        else if (a === "use-self") useSupport(idx, item, container, "self");
+        else if (a === "use-ally") useSupport(idx, item, container, "ally");
+        else if (a === "found-supply") foundSupply(idx, item);
       });
     });
   }
@@ -779,6 +869,14 @@
       var p = STATE.players[idx];
       clampStat(p, msg.stat, msg.value);
       renderVitals(idx);
+      // If the partner is holding a support item open, refresh it so the
+      // revive/heal button reflects this player's new HP.
+      var otherIdx = 1 - idx;
+      var openId = STATE.openItem[otherIdx];
+      if (openId) {
+        var openItem = STATE.players[otherIdx].inventory.find(function (it) { return it.id === openId; });
+        if (openItem && openItem.consumable && supportFor(openItem)) showInventoryDetail(otherIdx, openItem);
+      }
       save();
       return;
     }
