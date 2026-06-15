@@ -1,0 +1,134 @@
+/* ============================================
+   CARC-7A — Two Player (Co-op) Terminal styles
+   Reuses palette, fonts, pips, ECG + modal from
+   main.css; adds the hotseat vitals layout.
+   ============================================ */
+
+/* Status bar tweaks */
+.status-left,
+.status-right {
+  display: flex;
+  align-items: center;
+}
+
+.menu-back {
+  color: var(--text-dim);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.menu-back:active,
+.menu-back:hover {
+  color: var(--primary);
+}
+
+/* Content area — vertical, scrollable vitals */
+.duo-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px 18px calc(var(--safe-bottom) + 24px);
+  overflow-y: auto;
+}
+
+/* Monitor block */
+.duo-monitor {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+.duo-content .health-monitor {
+  width: 220px;
+  height: 84px;
+}
+
+.duo-player-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 4px;
+  color: var(--text-bright);
+}
+
+/* Stat panels */
+.duo-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 18px 16px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+}
+
+.duo-stat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.duo-stat .stat-name {
+  font-size: 18px;
+}
+
+.duo-stat .stat-numbers {
+  font-size: 24px;
+}
+
+/* Chunkier pips that fill the panel width */
+.duo-content .stat-pips {
+  gap: 6px;
+}
+
+.duo-content .stat-pip {
+  flex: 1;
+  max-width: none;
+  height: 16px;
+  border-radius: 2px;
+}
+
+/* Flatline (HP at 0) */
+.duo-stat.flatline .stat-numbers {
+  color: var(--danger);
+}
+
+/* Steppers */
+.duo-steppers {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+
+.stepper-btn {
+  flex: 1;
+  min-height: 54px;
+  font-size: 26px;
+  font-family: var(--font-display);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.12s ease, box-shadow 0.12s ease, transform 0.08s ease;
+}
+
+.stepper-btn.plus { color: var(--primary); }
+.stepper-btn.minus { color: var(--danger); }
+
+.stepper-btn:active {
+  transform: scale(0.97);
+}
+
+.stepper-btn.plus:active {
+  background: var(--primary-glow);
+  box-shadow: 0 0 12px var(--primary-glow);
+}
+
+.stepper-btn.minus:active {
+  background: var(--danger-glow);
+  box-shadow: 0 0 12px var(--danger-glow);
+}
