@@ -280,52 +280,86 @@
     return { color: "#ff6b35", glow: "rgba(255, 107, 53, 0.4)", label: "CRITICAL", speed: 1.9 };
   }
 
+  var ECG_CYCLE = 175; // logical px per heartbeat (fixed, so width doesn't change rate)
+
+  function sizeEcgCanvas(m) {
+    var dpr = window.devicePixelRatio || 1;
+    var w = m.canvas.clientWidth || 240;
+    var h = m.canvas.clientHeight || 90;
+    m.canvas.width = Math.round(w * dpr);
+    m.canvas.height = Math.round(h * dpr);
+    m.ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS pixels → crisp
+    m.w = w; m.h = h; m.x = 0; m.prevY = null;
+    m.ctx.fillStyle = "#000";
+    m.ctx.fillRect(0, 0, w, h);
+  }
+
   function initEcgMonitors() {
     monitors = [0, 1].map(function (idx) {
       var canvas = document.getElementById("ecg-canvas-" + idx);
       if (!canvas) return null;
-      var ctx = canvas.getContext("2d");
-      canvas.width = 240;
-      canvas.height = 100;
-      ctx.fillStyle = "rgba(0, 0, 0, 1)";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      return { canvas: canvas, ctx: ctx, x: 0, last: performance.now() };
+      var m = { canvas: canvas, ctx: canvas.getContext("2d"), x: 0, prevY: null, last: performance.now() };
+      sizeEcgCanvas(m);
+      return m;
     });
+    window.addEventListener("resize", function () { monitors.forEach(function (m) { if (m) sizeEcgCanvas(m); }); });
     requestAnimationFrame(drawEcg);
+  }
+
+  // Heartbeats per second: calm + healthy is slow/smooth; low HP OR high
+  // stress speeds it up.
+  function ecgBps(p) {
+    if (p.hp <= 0) return 0; // flatline
+    var hpFrac = p.hpMax ? p.hp / p.hpMax : 1;
+    var stressFrac = p.stressMax ? p.stress / p.stressMax : 0;
+    var danger = Math.max(1 - hpFrac, stressFrac); // 0 calm .. 1 critical
+    return 0.75 + danger * 1.75; // ~45 bpm calm .. ~150 bpm frantic
   }
 
   function drawEcg(now) {
     monitors.forEach(function (m, idx) {
-      if (!m) return;
-      var ctx = m.ctx, w = m.canvas.width, h = m.canvas.height;
+      if (!m || !m.w) return;
+      var ctx = m.ctx, w = m.w, h = m.h;
       var dt = (now - m.last) / 1000;
       m.last = now;
+      if (dt > 0.1) dt = 0.1; // clamp jumps (e.g. returning to a backgrounded tab)
 
       var p = STATE.players[idx];
       var state = hpState(p.hp, p.hpMax);
-      var flat = state.speed === 0;
+      var flat = p.hp <= 0;
+      var bps = ecgBps(p);
+      var pxPerSec = flat ? 55 : bps * ECG_CYCLE;
 
-      var speed = (flat ? 1.0 : state.speed) * 120;
-      var advance = speed * dt;
-      var midY = h * 0.5, amp = h * 0.35, cycleLen = w * 0.8;
+      var midY = h * 0.5, amp = h * 0.4;
+      var steps = Math.max(1, Math.round(pxPerSec * dt));
 
-      var steps = Math.ceil(advance);
+      ctx.lineWidth = 2;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+
       for (var s = 0; s < steps; s++) {
-        var clearX = (m.x + 8) % w;
-        ctx.fillStyle = "rgba(0, 0, 0, 1)";
-        ctx.fillRect(clearX, 0, 3, h);
+        var prevPx = m.x % w;
+        var prevY = m.prevY;
+        m.x += 1;
+        var px = m.x % w;
 
-        var yOff = flat ? 0 : ecgBeat((m.x % cycleLen) / cycleLen);
-        var y = midY + yOff * amp;
+        var y = midY + (flat ? 0 : ecgBeat((m.x % ECG_CYCLE) / ECG_CYCLE)) * amp;
 
-        ctx.fillStyle = state.color;
-        ctx.fillRect(m.x % w, y, 2, 2);
-        ctx.shadowColor = state.glow;
-        ctx.shadowBlur = 6;
-        ctx.fillRect(m.x % w, y, 2, 2);
-        ctx.shadowBlur = 0;
+        // erase a small leading gap so the sweep head reads clearly
+        ctx.fillStyle = "#000";
+        ctx.fillRect(px, 0, 6, h);
 
-        m.x = (m.x + 1) % w;
+        if (prevY != null && px > prevPx) { // don't connect across the wrap seam
+          ctx.strokeStyle = state.color;
+          ctx.shadowColor = state.glow;
+          ctx.shadowBlur = 6;
+          ctx.beginPath();
+          ctx.moveTo(prevPx, prevY);
+          ctx.lineTo(px, y);
+          ctx.stroke();
+          ctx.shadowBlur = 0;
+        }
+        m.prevY = y;
       }
     });
     requestAnimationFrame(drawEcg);
