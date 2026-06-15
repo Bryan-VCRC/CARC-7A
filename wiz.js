@@ -27,6 +27,10 @@ const RESTORE = { r: 255, g: 170, b: 90, dimming: 80 };
 // flashes = number of light pulses before settling back to RESTORE.
 const STROBE = { flashes: 4, interval: 80, color: { r: 255, g: 0, b: 0, dimming: 100 } };
 
+// Rapid-strobe / failing-light flicker: irregular on/off gaps so it reads as an
+// inconsistent flicker rather than a steady strobe.
+const FLICKER = { pulses: 9, minGap: 35, maxGap: 150, on: { r: 255, g: 240, b: 210, dimming: 100 } };
+
 const sock = dgram.createSocket("udp4");
 const bulbs = new Set();        // discovered (or configured) bulb IPs
 let configured = false;         // true when IPs come from WIZ_BULBS (skip discovery)
@@ -73,6 +77,19 @@ function strobe(opts) {
   activeTimers.push(t);
 }
 
+// Inconsistent flicker (failing light): irregular gaps between on/off flips.
+function flicker() {
+  let t = 0;
+  let on = false;
+  for (let i = 0; i < FLICKER.pulses; i++) {
+    on = !on;
+    const params = on ? { state: true, ...FLICKER.on } : { state: false };
+    activeTimers.push(setTimeout(() => setAll(params), t));
+    t += FLICKER.minGap + Math.floor(Math.random() * (FLICKER.maxGap - FLICKER.minGap));
+  }
+  activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), t + 80));
+}
+
 // --- Map game events to light behavior ---
 function handle(msg) {
   if (!msg || !msg.type) return;
@@ -92,6 +109,9 @@ function handle(msg) {
     switch (msg.action) {
       case "glitch": // rapid red strobe, then settle
         strobe();
+        break;
+      case "flicker": // inconsistent failing-light flicker
+        flicker();
         break;
       case "blackout": { // cut to black, hard red snap, then settle back to white
         setAll({ state: false });

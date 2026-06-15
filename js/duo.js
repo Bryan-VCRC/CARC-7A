@@ -74,6 +74,7 @@
   // --- State ---
   const STATE = {
     view: ["vitals", "vitals"], // per-player sub-view
+    openItem: [null, null],     // id of the item whose detail is open, per column
     players: [makePlayer(), makePlayer()],
   };
 
@@ -423,6 +424,7 @@
   }
 
   function closeDetail(idx) {
+    STATE.openItem[idx] = null;
     detailEl(idx).classList.add("hidden");
     gridEl(idx).style.display = "";
     var head = document.querySelector("#panel-gear-" + idx + " .col-gear-head");
@@ -430,6 +432,7 @@
   }
 
   function showInventoryDetail(idx, item) {
+    STATE.openItem[idx] = item.id;
     const detail = detailEl(idx);
     const content = document.getElementById("inventory-detail-content-" + idx);
 
@@ -789,9 +792,42 @@
         if (seenItemNonces.length > 50) seenItemNonces.shift();
       }
       var pi = msg.player === 1 ? 1 : 0;
-      STATE.players[pi].inventory.push(buildItemFromSpec(msg.item || {}));
-      SFX.use();
-      if (STATE.view[pi] === "gear") renderInventory(pi);
+      var inv = STATE.players[pi].inventory;
+      var incoming = buildItemFromSpec(msg.item || {});
+
+      // Merge into an existing matching item instead of stacking a duplicate:
+      //  - consumable (stim, medkit, rations) -> add uses
+      //  - ammo weapon -> add a spare magazine
+      //  - anything else -> bump quantity
+      var existing = inv.find(function (it) {
+        return it.type === incoming.type && it.name.toLowerCase() === incoming.name.toLowerCase();
+      });
+      var target = incoming; // the item the player ends up interacting with
+
+      if (existing && existing.consumable && incoming.consumable) {
+        existing.consumable.max += incoming.consumable.max;
+        existing.consumable.current += incoming.consumable.max;
+        target = existing;
+        consumableSound(existing);
+      } else if (existing && existing.ammo && incoming.ammo) {
+        existing.ammo.spareMags += 1;
+        target = existing;
+        SFX.reload();
+      } else if (existing && !existing.ammo && !existing.consumable) {
+        existing.quantity = (existing.quantity || 1) + (incoming.quantity || 1);
+        target = existing;
+        SFX.use();
+      } else {
+        inv.push(incoming);
+        SFX.use();
+      }
+
+      if (STATE.view[pi] === "gear") {
+        // If the player is looking at the item that just changed, refresh that
+        // detail; otherwise just refresh the grid.
+        if (STATE.openItem[pi] && STATE.openItem[pi] === target.id) showInventoryDetail(pi, target);
+        else if (!STATE.openItem[pi]) renderInventory(pi);
+      }
       save();
       return;
     }
@@ -815,6 +851,29 @@
     else if (action === "blackout") panicBlackout();
     else if (action === "corrupt") panicCorrupt();
     else if (action === "reboot") panicReboot();
+    else if (action === "flicker") panicFlicker();
+    else if (action === "static") panicStatic();
+  }
+
+  // Rapid strobe: blink the screen black at irregular gaps (failing-light feel).
+  function panicFlicker() {
+    var overlay = document.getElementById("blackout-overlay");
+    if (navigator.vibrate) navigator.vibrate([20, 40, 15, 60, 25, 30]);
+    var t = 0, on = false;
+    for (var i = 0; i < 9; i++) {
+      on = !on;
+      (function (show, delay) {
+        setTimeout(function () { overlay.classList.toggle("active", show); }, delay);
+      })(on, t);
+      t += 35 + Math.random() * 130;
+    }
+    setTimeout(function () { overlay.classList.remove("active"); }, t + 60);
+  }
+
+  // Silent Hill-style radio static burst.
+  function panicStatic() {
+    if (SFX.radioStatic) SFX.radioStatic();
+    if (navigator.vibrate) navigator.vibrate([200, 80, 200]);
   }
 
   function panicGlitch() {

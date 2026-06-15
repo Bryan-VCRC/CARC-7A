@@ -465,6 +465,10 @@
   // --- Rifle single shot: mag-fed weapons (falls back to the revolver shot) ---
   function playRifleShot() { if (!playSample("rifleShot", 0.9)) playGunshot(); }
 
+  // --- Radio static: Silent Hill-style comms burst ---
+  preloadSample("radioStatic", "data/media/soundeffects/radio_static.mp3");
+  function playRadioStatic() { playSample("radioStatic", 0.7); }
+
   // --- Heal: medkit recording (falls back to the generic use blip) ---
   function playHeal() { if (!playSample("heal", 0.8)) playUse(); }
 
@@ -495,6 +499,7 @@
     use: playUse,
     reloadRifle: playRifleReload,
     shotRifle: playRifleShot,
+    radioStatic: playRadioStatic,
     heal: playHeal,
     eat: playEat,
     fearStart: playFearStart,

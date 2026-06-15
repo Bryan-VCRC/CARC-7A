@@ -764,6 +764,14 @@
         <span class="btn-icon">&#8635;</span>
         FORCE REBOOT
       </button>
+      <button class="panic-btn" id="panic-flicker" data-cmd="flicker">
+        <span class="btn-icon">&#9889;</span>
+        RAPID STROBE
+      </button>
+      <button class="panic-btn" id="panic-static" data-cmd="static">
+        <span class="btn-icon">&#128251;</span>
+        RADIO STATIC
+      </button>
     </div>
   </div>
 
@@ -819,7 +827,9 @@
     glitch: "GLITCH BURST",
     blackout: "BLACKOUT",
     corrupt: "DATA CORRUPT",
-    reboot: "FORCE REBOOT"
+    reboot: "FORCE REBOOT",
+    flicker: "RAPID STROBE",
+    static: "RADIO STATIC"
   };
 
   panicBtns.forEach(function (btn) {
