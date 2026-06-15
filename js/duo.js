@@ -1,9 +1,9 @@
 /* ============================================
    CARC-7A — Two Player (Co-op) Terminal
-   Hotseat: editable names, HP + Stress, and a
-   per-player inventory. Inventory mechanics
-   (ammo fire/reload, consumable uses, item cards)
-   are ported from the single-player terminal.
+   Split-screen: both crew shown side by side. HP + Stress are
+   GM-driven (read-only here, updated over the sync layer). Each
+   player keeps a per-player inventory with the solo item engine
+   (ammo fire/reload, consumable uses). Items are added by the GM.
    ============================================ */
 
 (function () {
@@ -70,13 +70,10 @@
 
   // --- State ---
   const STATE = {
-    active: 0,
-    view: "vitals",
+    view: ["vitals", "vitals"], // per-player sub-view
     players: [makePlayer(), makePlayer()],
   };
 
-  function player() { return STATE.players[STATE.active]; }
-  function inventory() { return player().inventory; }
   function displayName(idx) {
     var p = STATE.players[idx];
     var n = (p.name || "").trim();
@@ -88,7 +85,7 @@
 
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 2, active: STATE.active, view: STATE.view, players: STATE.players }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, players: STATE.players }));
     } catch (e) { /* storage unavailable — fail silently */ }
   }
 
@@ -111,8 +108,12 @@
           });
         }
       });
-      if (data.active === 0 || data.active === 1) STATE.active = data.active;
-      if (data.view === "vitals" || data.view === "gear") STATE.view = data.view;
+      // Per-player view (older saves stored a single string)
+      if (Array.isArray(data.view)) {
+        data.view.slice(0, 2).forEach(function (v, i) {
+          if (v === "vitals" || v === "gear") STATE.view[i] = v;
+        });
+      }
     } catch (e) { /* ignore corrupt save */ }
   }
 
@@ -140,6 +141,7 @@
     "  CREW SLOT 2 ............. LINKED",
     "  VITALS MONITOR .......... ONLINE",
     "  CARGO MANIFEST .......... LOADED",
+    "  WARDEN UPLINK ........... STANDBY",
     "",
     "TERMINAL READY.",
   ];
@@ -191,8 +193,56 @@
     setInterval(update, 1000);
   }
 
-  // --- ECG Health Monitor (driven by HP) ---
-  var ecgCanvas = null, ecgCtx = null, ecgX = 0, ecgLastTime = 0;
+  // --- Column markup (generated per player) ---
+  function statBlock(stat, idx) {
+    var label = stat === "hp" ? "HP" : "STRESS";
+    return '' +
+      '<div class="duo-stat stat-' + stat + '" id="block-' + stat + '-' + idx + '">' +
+      '<div class="duo-stat-header">' +
+      '<span class="stat-name">' + label + '</span>' +
+      '<span class="stat-numbers"><span id="stat-' + stat + '-' + idx + '">0</span>' +
+      '<span class="stat-sep">/</span><span id="stat-' + stat + '-max-' + idx + '">0</span></span>' +
+      '</div>' +
+      '<div class="stat-pips" id="pips-' + stat + '-' + idx + '"></div>' +
+      '</div>';
+  }
+
+  function columnHTML(idx) {
+    return '' +
+      '<section class="player-col" data-player="' + idx + '">' +
+      '<div class="col-head">' +
+      '<div class="health-monitor" id="health-monitor-' + idx + '">' +
+      '<canvas id="ecg-canvas-' + idx + '" width="120" height="50"></canvas>' +
+      '<div class="monitor-label" id="monitor-label-' + idx + '">STABLE</div>' +
+      '</div>' +
+      '<input id="player-name-input-' + idx + '" class="duo-name-input" maxlength="16" placeholder="ENTER NAME" aria-label="Player name" autocomplete="off">' +
+      '</div>' +
+      '<nav class="nav-tabs sub-tabs col-tabs">' +
+      '<button class="nav-tab active" data-view="vitals" data-player="' + idx + '"><span>VITALS</span></button>' +
+      '<button class="nav-tab" data-view="gear" data-player="' + idx + '"><span>GEAR</span></button>' +
+      '</nav>' +
+      '<div class="col-body">' +
+      '<section class="panel col-vitals active" id="panel-vitals-' + idx + '">' +
+      statBlock("hp", idx) + statBlock("stress", idx) +
+      '</section>' +
+      '<section class="panel col-gear" id="panel-gear-' + idx + '">' +
+      '<div class="col-gear-head"><span class="gear-title"><span class="flicker">&#9646;</span> GEAR</span></div>' +
+      '<div class="inventory-grid" id="inventory-grid-' + idx + '"></div>' +
+      '<div class="detail-view hidden" id="inventory-detail-' + idx + '">' +
+      '<button class="back-btn" data-back="' + idx + '">&#9664; BACK TO GEAR</button>' +
+      '<div class="detail-content" id="inventory-detail-content-' + idx + '"></div>' +
+      '</div>' +
+      '</section>' +
+      '</div>' +
+      '</section>';
+  }
+
+  function buildColumns() {
+    document.getElementById("duo-split").innerHTML = columnHTML(0) + columnHTML(1);
+  }
+
+  // --- ECG Health Monitor (one per player, driven by HP) ---
+  var monitors = [];
 
   function ecgBeat(t) {
     if (t < 0.1) return 0;
@@ -214,66 +264,70 @@
     return { color: "#ff6b35", glow: "rgba(255, 107, 53, 0.4)", label: "CRITICAL", speed: 1.9 };
   }
 
-  function initEcgMonitor() {
-    ecgCanvas = document.getElementById("ecg-canvas");
-    if (!ecgCanvas) return;
-    ecgCtx = ecgCanvas.getContext("2d");
-    ecgCanvas.width = 240;
-    ecgCanvas.height = 100;
-    ecgX = 0;
-    ecgLastTime = performance.now();
-    ecgCtx.fillStyle = "rgba(0, 0, 0, 1)";
-    ecgCtx.fillRect(0, 0, ecgCanvas.width, ecgCanvas.height);
+  function initEcgMonitors() {
+    monitors = [0, 1].map(function (idx) {
+      var canvas = document.getElementById("ecg-canvas-" + idx);
+      if (!canvas) return null;
+      var ctx = canvas.getContext("2d");
+      canvas.width = 240;
+      canvas.height = 100;
+      ctx.fillStyle = "rgba(0, 0, 0, 1)";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return { canvas: canvas, ctx: ctx, x: 0, last: performance.now() };
+    });
     requestAnimationFrame(drawEcg);
   }
 
   function drawEcg(now) {
-    if (!ecgCtx) return;
-    var w = ecgCanvas.width, h = ecgCanvas.height;
-    var dt = (now - ecgLastTime) / 1000;
-    ecgLastTime = now;
+    monitors.forEach(function (m, idx) {
+      if (!m) return;
+      var ctx = m.ctx, w = m.canvas.width, h = m.canvas.height;
+      var dt = (now - m.last) / 1000;
+      m.last = now;
 
-    var p = player();
-    var state = hpState(p.hp, p.hpMax);
-    var flat = state.speed === 0;
+      var p = STATE.players[idx];
+      var state = hpState(p.hp, p.hpMax);
+      var flat = state.speed === 0;
 
-    var speed = (flat ? 1.0 : state.speed) * 120;
-    var advance = speed * dt;
-    var midY = h * 0.5, amp = h * 0.35, cycleLen = w * 0.8;
+      var speed = (flat ? 1.0 : state.speed) * 120;
+      var advance = speed * dt;
+      var midY = h * 0.5, amp = h * 0.35, cycleLen = w * 0.8;
 
-    var steps = Math.ceil(advance);
-    for (var s = 0; s < steps; s++) {
-      var clearX = (ecgX + 8) % w;
-      ecgCtx.fillStyle = "rgba(0, 0, 0, 1)";
-      ecgCtx.fillRect(clearX, 0, 3, h);
+      var steps = Math.ceil(advance);
+      for (var s = 0; s < steps; s++) {
+        var clearX = (m.x + 8) % w;
+        ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        ctx.fillRect(clearX, 0, 3, h);
 
-      var yOff = flat ? 0 : ecgBeat((ecgX % cycleLen) / cycleLen);
-      var y = midY + yOff * amp;
+        var yOff = flat ? 0 : ecgBeat((m.x % cycleLen) / cycleLen);
+        var y = midY + yOff * amp;
 
-      ecgCtx.fillStyle = state.color;
-      ecgCtx.fillRect(ecgX % w, y, 2, 2);
-      ecgCtx.shadowColor = state.glow;
-      ecgCtx.shadowBlur = 6;
-      ecgCtx.fillRect(ecgX % w, y, 2, 2);
-      ecgCtx.shadowBlur = 0;
+        ctx.fillStyle = state.color;
+        ctx.fillRect(m.x % w, y, 2, 2);
+        ctx.shadowColor = state.glow;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(m.x % w, y, 2, 2);
+        ctx.shadowBlur = 0;
 
-      ecgX = (ecgX + 1) % w;
-    }
+        m.x = (m.x + 1) % w;
+      }
+    });
     requestAnimationFrame(drawEcg);
   }
 
-  function updateMonitorLabel() {
-    var p = player();
+  function updateMonitorLabel(idx) {
+    var p = STATE.players[idx];
     var state = hpState(p.hp, p.hpMax);
-    var label = document.getElementById("monitor-label");
+    var label = document.getElementById("monitor-label-" + idx);
     if (label) { label.textContent = state.label; label.style.color = state.color; }
-    var monitor = document.getElementById("health-monitor");
+    var monitor = document.getElementById("health-monitor-" + idx);
     if (monitor) monitor.style.borderColor = state.color;
   }
 
   // --- Vitals rendering ---
   function renderPips(containerId, current, max) {
     var el = document.getElementById(containerId);
+    if (!el) return;
     var html = "";
     for (var i = 0; i < max; i++) {
       html += '<div class="stat-pip' + (i < current ? " filled" : "") + '"></div>';
@@ -281,56 +335,54 @@
     el.innerHTML = html;
   }
 
-  function renderVitals() {
-    var p = player();
+  function renderVitals(idx) {
+    var p = STATE.players[idx];
 
-    document.getElementById("stat-hp").textContent = p.hp;
-    document.getElementById("stat-hp-max").textContent = p.hpMax;
-    document.getElementById("stat-stress").textContent = p.stress;
-    document.getElementById("stat-stress-max").textContent = p.stressMax;
+    document.getElementById("stat-hp-" + idx).textContent = p.hp;
+    document.getElementById("stat-hp-max-" + idx).textContent = p.hpMax;
+    document.getElementById("stat-stress-" + idx).textContent = p.stress;
+    document.getElementById("stat-stress-max-" + idx).textContent = p.stressMax;
 
-    renderPips("pips-hp", p.hp, p.hpMax);
-    renderPips("pips-stress", p.stress, p.stressMax);
+    renderPips("pips-hp-" + idx, p.hp, p.hpMax);
+    renderPips("pips-stress-" + idx, p.stress, p.stressMax);
 
-    var hpEl = document.getElementById("block-hp");
+    var hpEl = document.getElementById("block-hp-" + idx);
     hpEl.classList.toggle("critical", p.hp <= Math.ceil(p.hpMax * 0.25) && p.hp > 0);
     hpEl.classList.toggle("flatline", p.hp <= 0);
 
-    var stsEl = document.getElementById("block-stress");
+    var stsEl = document.getElementById("block-stress-" + idx);
     stsEl.classList.toggle("critical", p.stress >= p.stressMax);
 
-    updateMonitorLabel();
+    updateMonitorLabel(idx);
   }
 
-  function renderChrome() {
-    // Player tab labels + active states
-    document.getElementById("tab-name-0").textContent = displayName(0);
-    document.getElementById("tab-name-1").textContent = displayName(1);
-    document.querySelectorAll(".player-tabs .nav-tab").forEach(function (tab) {
-      tab.classList.toggle("active", Number(tab.dataset.player) === STATE.active);
+  function renderColumnChrome(idx) {
+    // Sub-view tab active states
+    var col = document.querySelector('.player-col[data-player="' + idx + '"]');
+    if (!col) return;
+    col.querySelectorAll(".col-tabs .nav-tab").forEach(function (tab) {
+      tab.classList.toggle("active", tab.dataset.view === STATE.view[idx]);
     });
-    // View tab active states
-    document.querySelectorAll(".sub-tabs .nav-tab").forEach(function (tab) {
-      tab.classList.toggle("active", tab.dataset.view === STATE.view);
-    });
-    // Panels
-    document.getElementById("panel-vitals").classList.toggle("active", STATE.view === "vitals");
-    document.getElementById("panel-gear").classList.toggle("active", STATE.view === "gear");
-    // Name input + gear owner
-    document.getElementById("player-name-input").value = player().name || "";
-    document.getElementById("gear-owner").textContent = displayName(STATE.active);
+    document.getElementById("panel-vitals-" + idx).classList.toggle("active", STATE.view[idx] === "vitals");
+    document.getElementById("panel-gear-" + idx).classList.toggle("active", STATE.view[idx] === "gear");
+    // Name input
+    var input = document.getElementById("player-name-input-" + idx);
+    if (input && document.activeElement !== input) input.value = STATE.players[idx].name || "";
   }
 
-  // --- Inventory: grid ---
-  function renderInventory() {
-    const grid = document.getElementById("inventory-grid");
-    const items = inventory();
+  // --- Inventory: grid (scoped to a player's column) ---
+  function detailEl(idx) { return document.getElementById("inventory-detail-" + idx); }
+  function gridEl(idx) { return document.getElementById("inventory-grid-" + idx); }
+
+  function renderInventory(idx) {
+    const grid = gridEl(idx);
+    const items = STATE.players[idx].inventory;
 
     if (items.length === 0) {
       grid.innerHTML =
         '<div class="empty-state" style="grid-column: 1/-1;">' +
         '<div class="empty-icon">📦</div>' +
-        '<div class="empty-text">NO GEAR — TAP + ADD ITEM</div></div>';
+        '<div class="empty-text">NO GEAR ASSIGNED</div></div>';
       return;
     }
 
@@ -346,21 +398,22 @@
     grid.querySelectorAll(".inv-card").forEach(function (card) {
       card.addEventListener("click", function () {
         SFX.select();
-        const item = inventory().find(function (i) { return i.id === card.dataset.id; });
-        if (item) showInventoryDetail(item);
+        const item = STATE.players[idx].inventory.find(function (i) { return i.id === card.dataset.id; });
+        if (item) showInventoryDetail(idx, item);
       });
     });
   }
 
-  function closeDetail() {
-    document.getElementById("inventory-detail").classList.add("hidden");
-    document.getElementById("inventory-grid").style.display = "";
-    document.querySelector("#panel-gear .panel-header").style.display = "";
+  function closeDetail(idx) {
+    detailEl(idx).classList.add("hidden");
+    gridEl(idx).style.display = "";
+    var head = document.querySelector("#panel-gear-" + idx + " .col-gear-head");
+    if (head) head.style.display = "";
   }
 
-  function showInventoryDetail(item) {
-    const detail = document.getElementById("inventory-detail");
-    const content = document.getElementById("inventory-detail-content");
+  function showInventoryDetail(idx, item) {
+    const detail = detailEl(idx);
+    const content = document.getElementById("inventory-detail-content-" + idx);
 
     let statsHtml = "";
     if (item.stats && Object.keys(item.stats).length) {
@@ -380,29 +433,15 @@
       '<div class="doc-meta"><span>TYPE: ' + item.type.toUpperCase() + '</span><span>QTY: ' + item.quantity + '</span></div>' +
       '</div>' +
       '<div class="doc-body">' + escapeHtml(item.description) + '</div>' +
-      statsHtml + ammoHtml + consumableHtml +
-      '<div class="discard-wrap"><button class="discard-btn" id="discard-item-btn">DISCARD ITEM</button></div>';
+      statsHtml + ammoHtml + consumableHtml;
 
-    if (item.ammo) wireAmmoActions(item, content);
-    if (item.consumable) wireConsumableActions(item, content);
+    if (item.ammo) wireAmmoActions(idx, item, content);
+    if (item.consumable) wireConsumableActions(idx, item, content);
 
-    var discardBtn = content.querySelector("#discard-item-btn");
-    if (discardBtn) discardBtn.addEventListener("click", function () { discardItem(item); });
-
-    document.getElementById("inventory-grid").style.display = "none";
-    document.querySelector("#panel-gear .panel-header").style.display = "none";
+    gridEl(idx).style.display = "none";
+    var head = document.querySelector("#panel-gear-" + idx + " .col-gear-head");
+    if (head) head.style.display = "none";
     detail.classList.remove("hidden");
-  }
-
-  function discardItem(item) {
-    const inv = inventory();
-    const idx = inv.findIndex(function (i) { return i.id === item.id; });
-    if (idx >= 0) inv.splice(idx, 1);
-    SFX.back();
-    if (navigator.vibrate) navigator.vibrate([15, 40, 15]);
-    save();
-    closeDetail();
-    renderInventory();
   }
 
   // --- Inventory: weapons / ammo ---
@@ -426,78 +465,78 @@
       '<div class="ammo-panel">' +
       '<div class="ammo-header">AMMUNITION</div>' +
       '<div class="ammo-display"><div class="ammo-current' + emptyClass + lowClass + '">' +
-      '<span class="ammo-count" id="ammo-count">' + a.current + '</span>' +
+      '<span class="ammo-count">' + a.current + '</span>' +
       '<span class="ammo-sep">/</span><span class="ammo-cap">' + a.magCapacity + '</span></div>' +
       '<div class="ammo-label">' + a.magLabel + '</div></div>' +
       '<div class="ammo-reserve"><span class="ammo-reserve-label">SPARE ' + a.spareLabel.toUpperCase() +
-      '</span><span class="ammo-reserve-value" id="ammo-spare">' + a.spareMags + '</span></div>' +
+      '</span><span class="ammo-reserve-value ammo-spare">' + a.spareMags + '</span></div>' +
       '<div class="ammo-reserve"><span class="ammo-reserve-label">TOTAL REMAINING</span>' +
-      '<span class="ammo-reserve-value" id="ammo-total">' + totalRemaining + '</span></div>' +
+      '<span class="ammo-reserve-value ammo-total">' + totalRemaining + '</span></div>' +
       '<div class="weapon-actions">' + fireButtons +
       '<button class="weapon-action-btn reload-btn" data-action="reload"' + reloadDisabled + '>RELOAD ' + a.magLabel.toUpperCase() + '</button>' +
       '<button class="weapon-action-btn found-btn" data-action="found-mag">+ FOUND ' + a.spareLabel.toUpperCase().slice(0, -1) + '</button>' +
-      '</div><div class="ammo-log" id="ammo-log"></div></div>';
+      '</div><div class="ammo-log"></div></div>';
   }
 
-  function wireAmmoActions(item, container) {
+  function wireAmmoActions(idx, item, container) {
     container.querySelectorAll(".weapon-action-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         const action = btn.dataset.action;
-        if (action === "semi") fireWeapon(item, 1);
-        else if (action === "burst") fireWeapon(item, 3);
-        else if (action === "reload") reloadWeapon(item);
-        else if (action === "found-mag") foundMag(item);
+        if (action === "semi") fireWeapon(idx, item, 1, container);
+        else if (action === "burst") fireWeapon(idx, item, 3, container);
+        else if (action === "reload") reloadWeapon(idx, item, container);
+        else if (action === "found-mag") foundMag(idx, item);
       });
     });
   }
 
-  function fireWeapon(item, rounds) {
+  function fireWeapon(idx, item, rounds, container) {
     const a = item.ammo;
     if (a.current <= 0) {
       SFX.empty();
-      logAmmoEvent("EMPTY — NO ROUND IN CHAMBER");
-      flashAmmoCount();
+      logToEl(container, "ammo-log", "EMPTY — NO ROUND IN CHAMBER");
+      flashAmmoCount(container);
       return;
     }
     const spent = Math.min(rounds, a.current);
     a.current -= spent;
-    if (spent === 1) { SFX.gunshot(); logAmmoEvent("FIRED 1 ROUND — " + a.current + " remaining"); }
-    else { SFX.burst(spent); logAmmoEvent("BURST FIRE — " + spent + " ROUNDS SPENT — " + a.current + " remaining"); }
-    updateAmmoDisplay(item);
+    if (spent === 1) { SFX.gunshot(); logToEl(container, "ammo-log", "FIRED 1 ROUND — " + a.current + " remaining"); }
+    else { SFX.burst(spent); logToEl(container, "ammo-log", "BURST FIRE — " + spent + " ROUNDS SPENT — " + a.current + " remaining"); }
+    updateAmmoDisplay(item, container);
     save();
     const vibePattern = Array.from({ length: spent }, function (_, i) { return i === 0 ? 30 : [40, 30]; }).flat();
     if (navigator.vibrate) navigator.vibrate(vibePattern);
   }
 
-  function reloadWeapon(item) {
+  function reloadWeapon(idx, item, container) {
     const a = item.ammo;
-    if (a.spareMags <= 0) { SFX.empty(); logAmmoEvent("NO SPARE " + a.spareLabel.toUpperCase()); return; }
-    if (a.current === a.magCapacity) { logAmmoEvent(a.magLabel.toUpperCase() + " ALREADY FULL"); return; }
+    if (a.spareMags <= 0) { SFX.empty(); logToEl(container, "ammo-log", "NO SPARE " + a.spareLabel.toUpperCase()); return; }
+    if (a.current === a.magCapacity) { logToEl(container, "ammo-log", a.magLabel.toUpperCase() + " ALREADY FULL"); return; }
     SFX.reload();
     const oldRounds = a.current;
     a.spareMags--;
     a.current = a.magCapacity;
-    if (oldRounds > 0) logAmmoEvent("SWAPPED " + a.magLabel.toUpperCase() + " — " + oldRounds + " ROUNDS DISCARDED");
-    else logAmmoEvent(a.magLabel.toUpperCase() + " LOADED — " + a.magCapacity + " ROUNDS");
-    updateAmmoDisplay(item);
+    if (oldRounds > 0) logToEl(container, "ammo-log", "SWAPPED " + a.magLabel.toUpperCase() + " — " + oldRounds + " ROUNDS DISCARDED");
+    else logToEl(container, "ammo-log", a.magLabel.toUpperCase() + " LOADED — " + a.magCapacity + " ROUNDS");
+    updateAmmoDisplay(item, container);
     save();
     if (navigator.vibrate) navigator.vibrate([20, 80, 40]);
   }
 
-  function foundMag(item) {
+  function foundMag(idx, item) {
     item.ammo.spareMags++;
     SFX.use();
     save();
-    showInventoryDetail(item);
+    showInventoryDetail(idx, item);
     if (navigator.vibrate) navigator.vibrate([15, 50, 15]);
   }
 
-  function updateAmmoDisplay(item) {
+  function updateAmmoDisplay(item, container) {
     const a = item.ammo;
     const totalRemaining = a.current + a.spareMags * a.magCapacity;
-    const countEl = document.getElementById("ammo-count");
-    const spareEl = document.getElementById("ammo-spare");
-    const totalEl = document.getElementById("ammo-total");
+    const countEl = container.querySelector(".ammo-count");
+    const spareEl = container.querySelector(".ammo-spare");
+    const totalEl = container.querySelector(".ammo-total");
     if (countEl) countEl.textContent = a.current;
     if (spareEl) spareEl.textContent = a.spareMags;
     if (totalEl) totalEl.textContent = totalRemaining;
@@ -506,18 +545,15 @@
       display.classList.toggle("ammo-empty", a.current === 0);
       display.classList.toggle("ammo-low", a.current > 0 && a.current <= Math.ceil(a.magCapacity * 0.25));
     }
-    const reloadBtn = document.querySelector(".reload-btn");
+    const reloadBtn = container.querySelector(".reload-btn");
     if (reloadBtn) reloadBtn.disabled = a.spareMags <= 0 || a.current === a.magCapacity;
-    document.querySelectorAll(".fire-semi-btn, .fire-burst-btn").forEach(function (btn) {
+    container.querySelectorAll(".fire-semi-btn, .fire-burst-btn").forEach(function (btn) {
       btn.classList.toggle("action-dry", a.current <= 0);
     });
   }
 
-  function logAmmoEvent(msg) { logToEl("ammo-log", msg); }
-  function logConsumableEvent(msg) { logToEl("consumable-log", msg); }
-
-  function logToEl(id, msg) {
-    const log = document.getElementById(id);
+  function logToEl(container, cls, msg) {
+    const log = container.querySelector("." + cls);
     if (!log) return;
     const line = document.createElement("div");
     line.className = "ammo-log-line";
@@ -527,8 +563,8 @@
     while (log.children.length > 6) log.removeChild(log.firstChild);
   }
 
-  function flashAmmoCount() {
-    const el = document.getElementById("ammo-count");
+  function flashAmmoCount(container) {
+    const el = container.querySelector(".ammo-count");
     if (!el) return;
     el.classList.add("flash-warn");
     setTimeout(function () { el.classList.remove("flash-warn"); }, 400);
@@ -548,220 +584,227 @@
       '<div class="ammo-panel">' +
       '<div class="ammo-header">' + c.verb + ' STATUS</div>' +
       '<div class="ammo-display"><div class="ammo-current' + emptyClass + lowClass + '">' +
-      '<span class="ammo-count" id="consumable-count">' + c.current + '</span>' +
+      '<span class="ammo-count consumable-count">' + c.current + '</span>' +
       '<span class="ammo-sep">/</span><span class="ammo-cap">' + c.max + '</span></div>' +
       '<div class="ammo-label">' + c.unit.toUpperCase() + '</div></div>' +
-      '<div class="consumable-pips" id="consumable-pips">' + pipsHtml + '</div>' +
+      '<div class="consumable-pips">' + pipsHtml + '</div>' +
       '<div class="weapon-actions">' +
       '<button class="weapon-action-btn use-btn" data-action="use"' + disabled + '>' + c.useLabel + '</button>' +
       '<button class="weapon-action-btn found-btn" data-action="found-supply">+ FOUND ' + c.unit.toUpperCase() + '</button>' +
-      '</div><div class="ammo-log" id="consumable-log"></div></div>';
+      '</div><div class="ammo-log consumable-log"></div></div>';
   }
 
-  function wireConsumableActions(item, container) {
+  function wireConsumableActions(idx, item, container) {
     container.querySelectorAll("[data-action]").forEach(function (btn) {
       btn.addEventListener("click", function () {
-        if (btn.dataset.action === "use") useConsumable(item);
-        else if (btn.dataset.action === "found-supply") foundSupply(item);
+        if (btn.dataset.action === "use") useConsumable(idx, item, container);
+        else if (btn.dataset.action === "found-supply") foundSupply(idx, item);
       });
     });
   }
 
-  function useConsumable(item) {
+  // Pick the recorded sound that fits the item being consumed.
+  function consumableSound(item) {
+    if (item.type === "medical") return SFX.heal();
+    if (item.type === "consumable") return SFX.eat();
+    return SFX.use();
+  }
+
+  function useConsumable(idx, item, container) {
     const c = item.consumable;
     if (c.current <= 0) {
       SFX.empty();
-      logConsumableEvent(c.depletedMsg);
-      const el = document.getElementById("consumable-count");
+      logToEl(container, "consumable-log", c.depletedMsg);
+      const el = container.querySelector(".consumable-count");
       if (el) { el.classList.add("flash-warn"); setTimeout(function () { el.classList.remove("flash-warn"); }, 400); }
       return;
     }
     c.current -= c.perUse;
-    SFX.use();
-    logConsumableEvent(c.verb + " — " + c.current + " " + c.unit + " remaining");
-    updateConsumableDisplay(item);
+    consumableSound(item);
+    logToEl(container, "consumable-log", c.verb + " — " + c.current + " " + c.unit + " remaining");
+    updateConsumableDisplay(item, container);
     save();
     if (navigator.vibrate) navigator.vibrate([15, 50, 15]);
   }
 
-  function foundSupply(item) {
+  function foundSupply(idx, item) {
     const c = item.consumable;
     c.current += 1;
     c.max += 1;
     SFX.use();
-    logConsumableEvent("ACQUIRED " + c.unit.toUpperCase() + " (+1) — " + c.current + " total");
-    showInventoryDetail(item);
+    showInventoryDetail(idx, item);
     save();
     if (navigator.vibrate) navigator.vibrate([15, 50, 15]);
   }
 
-  function updateConsumableDisplay(item) {
+  function updateConsumableDisplay(item, container) {
     const c = item.consumable;
-    const countEl = document.getElementById("consumable-count");
+    const countEl = container.querySelector(".consumable-count");
     if (countEl) countEl.textContent = c.current;
     const display = countEl ? countEl.closest(".ammo-current") : null;
     if (display) {
       display.classList.toggle("ammo-empty", c.current === 0);
       display.classList.toggle("ammo-low", c.current > 0 && c.current <= Math.ceil(c.max * 0.25));
     }
-    document.querySelectorAll("#consumable-pips .consumable-pip").forEach(function (pip, i) {
+    container.querySelectorAll(".consumable-pips .consumable-pip").forEach(function (pip, i) {
       pip.classList.toggle("filled", i < c.current);
     });
-    const useBtn = document.querySelector(".use-btn");
+    const useBtn = container.querySelector(".use-btn");
     if (useBtn) { useBtn.disabled = c.current <= 0; useBtn.classList.toggle("action-dry", c.current <= 0); }
   }
 
-  // --- Add item modal ---
-  function initAddItem() {
-    const modal = document.getElementById("item-modal");
-    const backdrop = modal.querySelector(".form-modal-backdrop");
-    const tracker = document.getElementById("f-tracker");
-    const ammoFields = document.getElementById("f-ammo-fields");
-    const usesFields = document.getElementById("f-uses-fields");
+  // --- GM-driven item creation (received over sync) ---
+  function buildItemFromSpec(spec) {
+    var type = spec.type || "misc";
+    var item = {
+      id: genId(),
+      type: type,
+      name: (spec.name || "").trim() || "Unknown Item",
+      icon: spec.icon || ICON_FOR_TYPE[type] || "📦",
+      quantity: Math.max(1, parseInt(spec.quantity, 10) || 1),
+      description: (spec.description || "").trim() || "No description.",
+      stats: spec.stats && typeof spec.stats === "object" ? spec.stats : {},
+    };
+    if (spec.tracker === "ammo") {
+      var cap = Math.max(1, parseInt(spec.magCapacity, 10) || 1);
+      var spare = Math.max(0, parseInt(spec.spareMags, 10) || 0);
+      item.ammo = { current: cap, magCapacity: cap, spareMags: spare, magLabel: "Magazine", spareLabel: "Magazines" };
+      item.fireModes = ["semi"];
+    } else if (spec.tracker === "uses") {
+      var m = Math.max(1, parseInt(spec.maxUses, 10) || 1);
+      item.consumable = { current: m, max: m, unit: "uses", perUse: 1, verb: "USE", useLabel: "USE", depletedMsg: "DEPLETED" };
+    }
+    return item;
+  }
 
-    function syncTracker() {
-      ammoFields.classList.toggle("hidden", tracker.value !== "ammo");
-      usesFields.classList.toggle("hidden", tracker.value !== "uses");
+  // --- Sync (GM uplink) ---
+  function clampStat(p, stat, value) {
+    var v = parseInt(value, 10);
+    if (isNaN(v)) return;
+    if (stat === "hpMax" || stat === "stressMax") {
+      p[stat] = Math.max(1, v);
+      var cur = stat === "hpMax" ? "hp" : "stress";
+      if (p[cur] > p[stat]) p[cur] = p[stat];
+    } else if (stat === "hp" || stat === "stress") {
+      var max = stat === "hp" ? p.hpMax : p.stressMax;
+      p[stat] = Math.max(0, Math.min(max, v));
+    }
+  }
+
+  function snapshot() {
+    return {
+      type: "coop-state",
+      players: STATE.players.map(function (p, i) {
+        return { name: displayName(i), hp: p.hp, hpMax: p.hpMax, stress: p.stress, stressMax: p.stressMax };
+      }),
+    };
+  }
+
+  function handleSyncMessage(msg) {
+    if (!msg || typeof msg !== "object") return;
+
+    if (msg.type === "request-state") {
+      GameSync.send(snapshot());
+      return;
     }
 
-    function openModal() {
-      document.getElementById("f-name").value = "";
-      document.getElementById("f-type").value = "misc";
-      document.getElementById("f-qty").value = "1";
-      document.getElementById("f-desc").value = "";
-      tracker.value = "none";
-      syncTracker();
-      SFX.select();
-      modal.classList.remove("hidden");
-      setTimeout(function () { document.getElementById("f-name").focus(); }, 50);
-    }
-
-    function closeModal() { modal.classList.add("hidden"); }
-
-    function addItem() {
-      const type = document.getElementById("f-type").value;
-      const name = (document.getElementById("f-name").value || "").trim() || "Unknown Item";
-      const qty = Math.max(1, parseInt(document.getElementById("f-qty").value, 10) || 1);
-      const desc = (document.getElementById("f-desc").value || "").trim() || "No description.";
-
-      const item = {
-        id: genId(), type: type, name: name, icon: ICON_FOR_TYPE[type] || "📦",
-        quantity: qty, description: desc, stats: {},
-      };
-
-      if (tracker.value === "ammo") {
-        const cap = Math.max(1, parseInt(document.getElementById("f-cap").value, 10) || 1);
-        const spare = Math.max(0, parseInt(document.getElementById("f-spare").value, 10) || 0);
-        item.ammo = { current: cap, magCapacity: cap, spareMags: spare, magLabel: "Magazine", spareLabel: "Magazines" };
-        item.fireModes = ["semi"];
-      } else if (tracker.value === "uses") {
-        const m = Math.max(1, parseInt(document.getElementById("f-uses").value, 10) || 1);
-        item.consumable = { current: m, max: m, unit: "uses", perUse: 1, verb: "USE", useLabel: "USE", depletedMsg: "DEPLETED" };
-      }
-
-      inventory().push(item);
-      SFX.use();
-      if (navigator.vibrate) navigator.vibrate([15, 40, 15]);
+    if (msg.type === "coop-stat") {
+      var idx = msg.player === 1 ? 1 : 0;
+      var p = STATE.players[idx];
+      clampStat(p, msg.stat, msg.value);
+      renderVitals(idx);
       save();
-      closeModal();
-      closeDetail();
-      renderInventory();
+      return;
     }
 
-    document.getElementById("add-item-btn").addEventListener("click", openModal);
-    document.getElementById("item-cancel").addEventListener("click", function () { SFX.back(); closeModal(); });
-    backdrop.addEventListener("click", function () { SFX.back(); closeModal(); });
-    document.getElementById("item-add").addEventListener("click", addItem);
-    tracker.addEventListener("change", syncTracker);
+    if (msg.type === "coop-add-item") {
+      var pi = msg.player === 1 ? 1 : 0;
+      STATE.players[pi].inventory.push(buildItemFromSpec(msg.item || {}));
+      SFX.use();
+      if (STATE.view[pi] === "gear") renderInventory(pi);
+      save();
+      return;
+    }
+
+    if (msg.type === "coop-reset") {
+      STATE.players = [makePlayer(), makePlayer()];
+      STATE.view = ["vitals", "vitals"];
+      SFX.bootDone();
+      renderAll();
+      save();
+      GameSync.send(snapshot());
+      return;
+    }
+  }
+
+  function initSync() {
+    if (!window.GameSync) return;
+    var statusEl = document.getElementById("link-status");
+    GameSync.onStatus(function (online) {
+      if (statusEl) statusEl.classList.toggle("online", !!online);
+    });
+    GameSync.onMessage(handleSyncMessage);
+    GameSync.init("player");
+    // Announce our current vitals so a GM console that's already open syncs up.
+    GameSync.send(snapshot());
   }
 
   // --- Interactions ---
-  function adjust(stat, dir) {
-    var p = player();
-    var max = stat === "hp" ? p.hpMax : p.stressMax;
-    var next = Math.max(0, Math.min(max, p[stat] + dir));
-    if (next === p[stat]) { SFX.empty(); return; }
-    p[stat] = next;
-    if (dir < 0) SFX.select(); else SFX.use();
-    if (navigator.vibrate) navigator.vibrate(12);
-    renderVitals();
-    save();
-  }
-
-  function switchPlayer(index) {
-    if (index === STATE.active) return;
-    STATE.active = index;
+  function switchView(idx, view) {
+    if (view === STATE.view[idx]) return;
+    STATE.view[idx] = view;
     SFX.tab();
     if (navigator.vibrate) navigator.vibrate(10);
-    closeDetail();
-    renderChrome();
-    renderVitals();
-    renderInventory();
-    save();
-  }
-
-  function switchView(view) {
-    if (view === STATE.view) return;
-    STATE.view = view;
-    SFX.tab();
-    if (navigator.vibrate) navigator.vibrate(10);
-    renderChrome();
-    if (view === "gear") { closeDetail(); renderInventory(); }
+    renderColumnChrome(idx);
+    if (view === "gear") { closeDetail(idx); renderInventory(idx); }
     save();
   }
 
   function initToggles() {
-    document.querySelectorAll(".player-tabs .nav-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () { switchPlayer(Number(tab.dataset.player)); });
+    document.querySelectorAll(".col-tabs .nav-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () {
+        switchView(Number(tab.dataset.player), tab.dataset.view);
+      });
     });
-    document.querySelectorAll(".sub-tabs .nav-tab").forEach(function (tab) {
-      tab.addEventListener("click", function () { switchView(tab.dataset.view); });
-    });
-  }
-
-  function initNameInput() {
-    const input = document.getElementById("player-name-input");
-    input.addEventListener("input", function () {
-      player().name = input.value;
-      document.getElementById("tab-name-" + STATE.active).textContent = displayName(STATE.active);
-      document.getElementById("gear-owner").textContent = displayName(STATE.active);
-      save();
+    document.querySelectorAll(".back-btn[data-back]").forEach(function (btn) {
+      btn.addEventListener("click", function () { SFX.back(); closeDetail(Number(btn.dataset.back)); });
     });
   }
 
-  function initResetButton() {
-    var modal = document.getElementById("reset-modal");
-    var backdrop = modal.querySelector(".reset-modal-backdrop");
-    document.getElementById("reset-btn").addEventListener("click", function () { SFX.select(); modal.classList.remove("hidden"); });
-    document.getElementById("reset-cancel").addEventListener("click", function () { SFX.back(); modal.classList.add("hidden"); });
-    backdrop.addEventListener("click", function () { SFX.back(); modal.classList.add("hidden"); });
-    document.getElementById("reset-confirm").addEventListener("click", function () {
-      STATE.players = [makePlayer(), makePlayer()];
-      STATE.active = 0;
-      STATE.view = "vitals";
-      SFX.bootDone();
-      modal.classList.add("hidden");
-      closeDetail();
-      renderChrome();
-      renderVitals();
-      renderInventory();
-      save();
+  function initNameInputs() {
+    [0, 1].forEach(function (idx) {
+      var input = document.getElementById("player-name-input-" + idx);
+      input.addEventListener("input", function () {
+        STATE.players[idx].name = input.value;
+        save();
+        if (window.GameSync) GameSync.send(snapshot());
+      });
+    });
+  }
+
+  // --- Render everything ---
+  function renderAll() {
+    [0, 1].forEach(function (idx) {
+      renderColumnChrome(idx);
+      renderVitals(idx);
+      renderInventory(idx);
+      if (STATE.view[idx] === "gear") {
+        // keep grid visible; close any stale detail
+        closeDetail(idx);
+      }
     });
   }
 
   // --- Init ---
   function initApp() {
     load();
+    buildColumns();
     startClock();
-    initEcgMonitor();
+    initEcgMonitors();
     initToggles();
-    initNameInput();
-    initAddItem();
-    initResetButton();
-    document.getElementById("gear-back").addEventListener("click", function () { SFX.back(); closeDetail(); });
-    renderChrome();
-    renderVitals();
-    renderInventory();
+    initNameInputs();
+    renderAll();
+    initSync();
   }
 
   if (document.readyState === "loading") {

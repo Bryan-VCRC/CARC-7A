@@ -531,6 +531,95 @@
       letter-spacing: 4px;
       animation: pulse-dot 1.5s infinite;
     }
+
+    /* Co-op crew blocks */
+    .coop-link {
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+    .coop-link.online { color: var(--primary); }
+
+    .coop-block {
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      padding: 12px;
+      margin-bottom: 14px;
+      background: rgba(255, 255, 255, 0.01);
+    }
+
+    .coop-name {
+      font-family: var(--font-display);
+      font-size: 12px;
+      color: var(--primary);
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+    }
+
+    .coop-additem {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .coop-additem .ci-name { grid-column: 1 / -1; }
+
+    .coop-additem input,
+    .coop-additem select {
+      padding: 8px 10px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      color: var(--text-bright);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 1px;
+      outline: none;
+      width: 100%;
+    }
+
+    .coop-additem input:focus,
+    .coop-additem select:focus { border-color: var(--primary-dim); }
+
+    .coop-additem .ci-sub { display: none; }
+    .coop-additem .ci-sub.show { display: block; }
+
+    .coop-add-btn {
+      grid-column: 1 / -1;
+      padding: 10px;
+      background: rgba(0, 255, 157, 0.08);
+      border: 1px solid var(--primary-dim);
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .coop-add-btn:active { background: rgba(0, 255, 157, 0.18); }
+
+    .coop-reset-btn {
+      width: 100%;
+      padding: 12px;
+      background: rgba(255, 51, 68, 0.06);
+      border: 1px solid rgba(255, 51, 68, 0.4);
+      color: var(--danger);
+      font-family: var(--font-mono);
+      font-size: 11px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .coop-reset-btn:active { background: rgba(255, 51, 68, 0.18); }
   </style>
 </head>
 <body>
@@ -617,6 +706,13 @@
   </div>
 
   <div class="section">
+    <div class="section-title">Co-op Crew</div>
+    <div id="coop-link" class="coop-link">&#9679; TERMINAL LINK: OFFLINE</div>
+    <div id="coop-section"></div>
+    <button id="coop-reset" class="coop-reset-btn">RESET BOTH CREW</button>
+  </div>
+
+  <div class="section">
     <div class="section-title">Atmosphere Controls</div>
 
     <button class="admin-btn" id="fear-toggle">
@@ -652,6 +748,7 @@
     <div id="admin-log-list"></div>
   </div>
 
+<script src="js/sync.js"></script>
 <script>
 (function () {
   "use strict";
@@ -941,6 +1038,191 @@
 
   renderAdminWoundLog();
   checkDeath();
+
+  // ============================================
+  //  CO-OP CREW CONTROL (drives the split-screen terminal)
+  // ============================================
+  var coop = [
+    { name: "PLAYER 1", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
+    { name: "PLAYER 2", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
+  ];
+
+  var ITEM_TYPES = ["weapon", "tool", "medical", "armor", "consumable", "keyitem", "misc"];
+
+  function coopStatRow(idx, stat, label, cls) {
+    var maxStat = stat + "Max";
+    return '' +
+      '<div class="stat-control" data-coop="' + idx + '" data-stat="' + stat + '">' +
+      '<span class="stat-control-label ' + cls + '">' + label + '</span>' +
+      '<div class="stat-control-actions">' +
+      '<button class="stat-adj-btn danger" data-dir="-1">-</button>' +
+      '<span class="stat-val" data-val="' + stat + '">' + coop[idx][stat] + '</span>' +
+      '<button class="stat-adj-btn" data-dir="1">+</button>' +
+      '<div class="stat-max-control">' +
+      '<span class="stat-max-label">MAX</span>' +
+      '<button class="stat-max-btn" data-max-dir="-1">-</button>' +
+      '<span class="stat-val" data-val="' + maxStat + '" style="font-size:13px;">' + coop[idx][maxStat] + '</span>' +
+      '<button class="stat-max-btn" data-max-dir="1">+</button>' +
+      '</div></div></div>';
+  }
+
+  function coopBlockHTML(idx) {
+    var typeOpts = ITEM_TYPES.map(function (t) {
+      return '<option value="' + t + '"' + (t === "misc" ? " selected" : "") + '>' + t.toUpperCase() + '</option>';
+    }).join("");
+    return '' +
+      '<div class="coop-block" data-coop="' + idx + '">' +
+      '<div class="coop-name" data-name="' + idx + '">' + coop[idx].name + '</div>' +
+      coopStatRow(idx, "hp", "HP", "hp") +
+      coopStatRow(idx, "stress", "STRESS", "stress") +
+      '<div class="coop-additem">' +
+      '<input class="ci-name" type="text" maxlength="28" placeholder="Item name...">' +
+      '<select class="ci-type">' + typeOpts + '</select>' +
+      '<input class="ci-qty" type="number" min="1" value="1" placeholder="Qty">' +
+      '<select class="ci-tracker">' +
+      '<option value="none" selected>NO TRACKER</option>' +
+      '<option value="ammo">AMMO</option>' +
+      '<option value="uses">USES</option>' +
+      '</select>' +
+      '<input class="ci-desc" type="text" maxlength="120" placeholder="Description (optional)" style="grid-column:1/-1;">' +
+      '<input class="ci-cap ci-sub" type="number" min="1" value="6" placeholder="Mag capacity">' +
+      '<input class="ci-spare ci-sub" type="number" min="0" value="1" placeholder="Spare mags">' +
+      '<input class="ci-uses ci-sub" type="number" min="1" value="3" placeholder="Max uses" style="grid-column:1/-1;">' +
+      '<button class="coop-add-btn">+ ADD ITEM TO ' + coop[idx].name + '</button>' +
+      '</div></div>';
+  }
+
+  function renderCoopValues() {
+    document.querySelectorAll(".coop-block").forEach(function (block) {
+      var idx = parseInt(block.dataset.coop, 10);
+      block.querySelector('[data-name="' + idx + '"]').textContent = coop[idx].name;
+      ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
+        var el = block.querySelector('[data-val="' + k + '"]');
+        if (el) el.textContent = coop[idx][k];
+      });
+      var addBtn = block.querySelector(".coop-add-btn");
+      if (addBtn) addBtn.textContent = "+ ADD ITEM TO " + coop[idx].name;
+    });
+  }
+
+  function clampCoop(idx, stat) {
+    var c = coop[idx];
+    if (stat === "hpMax" || stat === "stressMax") {
+      if (c[stat] < 1) c[stat] = 1;
+      var cur = stat === "hpMax" ? "hp" : "stress";
+      if (c[cur] > c[stat]) c[cur] = c[stat];
+    } else {
+      var max = stat === "hp" ? c.hpMax : c.stressMax;
+      if (c[stat] < 0) c[stat] = 0;
+      if (c[stat] > max) c[stat] = max;
+    }
+  }
+
+  function buildCoopSection() {
+    document.getElementById("coop-section").innerHTML = coopBlockHTML(0) + coopBlockHTML(1);
+
+    document.querySelectorAll(".coop-block").forEach(function (block) {
+      var idx = parseInt(block.dataset.coop, 10);
+
+      // HP / Stress value + max steppers
+      block.querySelectorAll(".stat-control").forEach(function (row) {
+        var stat = row.dataset.stat;
+        var maxStat = stat + "Max";
+        row.querySelectorAll(".stat-adj-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            coop[idx][stat] += parseInt(btn.dataset.dir, 10);
+            clampCoop(idx, stat);
+            renderCoopValues();
+            sendCoopStat(idx, stat);
+            log("P" + (idx + 1) + " " + stat.toUpperCase() + " = " + coop[idx][stat],
+              stat === "hp" && coop[idx][stat] === 0 ? "fear" : "ok");
+          });
+        });
+        row.querySelectorAll(".stat-max-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            coop[idx][maxStat] += parseInt(btn.dataset.maxDir, 10);
+            clampCoop(idx, maxStat);
+            renderCoopValues();
+            sendCoopStat(idx, maxStat);
+            // current value may have been clamped down — push it too
+            sendCoopStat(idx, stat);
+            log("P" + (idx + 1) + " " + maxStat.toUpperCase() + " = " + coop[idx][maxStat]);
+          });
+        });
+      });
+
+      // Tracker sub-fields show/hide
+      var tracker = block.querySelector(".ci-tracker");
+      var cap = block.querySelector(".ci-cap");
+      var spare = block.querySelector(".ci-spare");
+      var uses = block.querySelector(".ci-uses");
+      function syncTracker() {
+        cap.classList.toggle("show", tracker.value === "ammo");
+        spare.classList.toggle("show", tracker.value === "ammo");
+        uses.classList.toggle("show", tracker.value === "uses");
+      }
+      tracker.addEventListener("change", syncTracker);
+      syncTracker();
+
+      // Add item
+      block.querySelector(".coop-add-btn").addEventListener("click", function () {
+        var name = block.querySelector(".ci-name").value.trim();
+        if (!name) { block.querySelector(".ci-name").focus(); return; }
+        var spec = {
+          name: name,
+          type: block.querySelector(".ci-type").value,
+          quantity: block.querySelector(".ci-qty").value,
+          description: block.querySelector(".ci-desc").value,
+          tracker: tracker.value,
+          magCapacity: cap.value,
+          spareMags: spare.value,
+          maxUses: uses.value,
+        };
+        GameSync.send({ type: "coop-add-item", player: idx, item: spec });
+        block.querySelector(".ci-name").value = "";
+        block.querySelector(".ci-desc").value = "";
+        log("P" + (idx + 1) + " GIVEN ITEM: " + name, "ok");
+      });
+    });
+  }
+
+  function sendCoopStat(idx, stat) {
+    GameSync.send({ type: "coop-stat", player: idx, stat: stat, value: coop[idx][stat] });
+  }
+
+  buildCoopSection();
+
+  document.getElementById("coop-reset").addEventListener("click", function () {
+    coop = [
+      { name: "PLAYER 1", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
+      { name: "PLAYER 2", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
+    ];
+    renderCoopValues();
+    GameSync.send({ type: "coop-reset" });
+    log("CO-OP CREW RESET", "warn");
+  });
+
+  // --- Sync layer (cross-device link to the co-op terminal) ---
+  var coopLink = document.getElementById("coop-link");
+  if (window.GameSync) {
+    GameSync.onStatus(function (online) {
+      coopLink.classList.toggle("online", !!online);
+      coopLink.innerHTML = "&#9679; TERMINAL LINK: " + (online ? "ONLINE" : "OFFLINE");
+    });
+    GameSync.onMessage(function (msg) {
+      if (!msg || msg.type !== "coop-state" || !Array.isArray(msg.players)) return;
+      msg.players.slice(0, 2).forEach(function (p, i) {
+        if (typeof p.name === "string") coop[i].name = p.name;
+        ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
+          if (typeof p[k] === "number") coop[i][k] = p[k];
+        });
+      });
+      renderCoopValues();
+    });
+    GameSync.init("admin");
+    // Pull current vitals from the terminal (covers same-browser BroadcastChannel too)
+    GameSync.send({ type: "request-state" });
+  }
 
   log("GM console ready. Awaiting commands.", "ok");
 })();

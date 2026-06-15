@@ -9,9 +9,15 @@
   let ctx = null;
 
   function ensureContext() {
-    if (ctx) return true;
+    if (ctx) {
+      // Browsers open the context "suspended" until a user gesture; nudge it
+      // back to running on every call so deferred sounds aren't silently lost.
+      if (ctx.state === "suspended" && ctx.resume) ctx.resume();
+      return true;
+    }
     try {
       ctx = new (window.AudioContext || window.webkitAudioContext)();
+      if (ctx.state === "suspended" && ctx.resume) ctx.resume();
       return true;
     } catch (e) {
       return false;
@@ -214,6 +220,7 @@
   // --- Single gunshot: sharp crack + low thump ---
   function playGunshot() {
     if (!ensureContext()) return;
+    if (playSample("gunshot", 0.9)) return; // real recording when available
     const t = ctx.currentTime;
 
     // Sharp transient crack
@@ -249,6 +256,7 @@
   // --- Burst fire: rapid shots (count matches rounds spent) ---
   function playBurst(count) {
     if (!ensureContext()) return;
+    if (playSample("burst", 0.9)) return; // real recording when available
     const n = count || 3;
     const t = ctx.currentTime;
     for (let i = 0; i < n; i++) {
@@ -286,6 +294,7 @@
   // --- Reload: heavy magazine clunk + slide rack ---
   function playReload() {
     if (!ensureContext()) return;
+    if (playSample("reload", 0.9)) return; // real recording when available
     const t = ctx.currentTime;
 
     // Magazine drop — low thud
@@ -339,6 +348,7 @@
   // --- Dry fire: empty click ---
   function playEmpty() {
     if (!ensureContext()) return;
+    if (playSample("empty", 0.8)) return; // real recording when available
     const t = ctx.currentTime;
 
     const noise = ctx.createBufferSource();
@@ -405,10 +415,13 @@
       .catch(function () {});
   }
 
+  // Returns true if a sample for `name` exists (and was scheduled/decoding),
+  // false if there's nothing loaded yet — letting callers fall back to a
+  // synthesized tone while files are still being fetched.
   function playSample(name, volume) {
-    if (!ensureContext()) return;
+    if (!ensureContext()) return false;
     var s = samples[name];
-    if (!s) return;
+    if (!s) return false;
 
     function play(buffer) {
       var src = ctx.createBufferSource();
@@ -429,11 +442,26 @@
         play(decoded);
       });
     }
+    return true;
   }
 
   // Preload fear/panic sounds
   preloadSample("alert", "data/media/375975__glitchedtones__sci-fi-alert-03.wav");
   preloadSample("error", "data/media/176238__melissapons__sci-fi_short_error.wav");
+
+  // Preload recorded gameplay sounds (fall back to synthesized tones until loaded)
+  preloadSample("gunshot", "data/media/soundeffects/revolver_shot.wav");
+  preloadSample("burst", "data/media/soundeffects/rifle_burst.wav");
+  preloadSample("reload", "data/media/soundeffects/revolver_reload.wav");
+  preloadSample("empty", "data/media/soundeffects/gun_empty.wav");
+  preloadSample("heal", "data/media/soundeffects/heal.mp3");
+  preloadSample("eat", "data/media/soundeffects/eating.aiff");
+
+  // --- Heal: medkit recording (falls back to the generic use blip) ---
+  function playHeal() { if (!playSample("heal", 0.8)) playUse(); }
+
+  // --- Eat: consumable recording (falls back to the generic use blip) ---
+  function playEat() { if (!playSample("eat", 0.8)) playUse(); }
 
   // --- Fear start: plays the alert sample ---
   function playFearStart() {
@@ -457,6 +485,8 @@
     reload: playReload,
     empty: playEmpty,
     use: playUse,
+    heal: playHeal,
+    eat: playEat,
     fearStart: playFearStart,
     panicHit: playPanicHit,
     ensureContext: ensureContext,
