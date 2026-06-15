@@ -1344,21 +1344,9 @@
     SFX.tab();
   }
 
-  function openArchive() {
-    SFX.select();
+  function initArchive() {
     renderArchJournalList();
     renderArchMediaList();
-    document.getElementById("archive-modal").classList.remove("hidden");
-  }
-
-  function closeArchive() {
-    SFX.back();
-    document.getElementById("archive-modal").classList.add("hidden");
-  }
-
-  function initArchive() {
-    document.getElementById("open-archive").addEventListener("click", openArchive);
-    document.getElementById("archive-close").addEventListener("click", closeArchive);
     document.querySelectorAll(".archive-tabs .nav-tab").forEach(function (t) {
       t.addEventListener("click", function () { switchArchTab(t.dataset.arch); });
     });
