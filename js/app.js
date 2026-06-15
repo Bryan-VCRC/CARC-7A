@@ -379,7 +379,8 @@
     a.current -= spent;
 
     if (spent === 1) {
-      SFX.gunshot();
+      if (/mag/i.test(a.magLabel || "") && SFX.shotRifle) SFX.shotRifle();
+      else SFX.gunshot();
       logAmmoEvent(`FIRED 1 ROUND — ${a.current} remaining`);
     } else {
       SFX.burst(spent);

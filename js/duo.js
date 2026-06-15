@@ -518,8 +518,14 @@
     }
     const spent = Math.min(rounds, a.current);
     a.current -= spent;
-    if (spent === 1) { SFX.gunshot(); logToEl(container, "ammo-log", "FIRED 1 ROUND — " + a.current + " remaining"); }
-    else { SFX.burst(spent); logToEl(container, "ammo-log", "BURST FIRE — " + spent + " ROUNDS SPENT — " + a.current + " remaining"); }
+    var magFed = /mag/i.test(a.magLabel || "");
+    if (spent === 1) {
+      if (magFed && SFX.shotRifle) SFX.shotRifle(); else SFX.gunshot();
+      logToEl(container, "ammo-log", "FIRED 1 ROUND — " + a.current + " remaining");
+    } else {
+      SFX.burst(spent);
+      logToEl(container, "ammo-log", "BURST FIRE — " + spent + " ROUNDS SPENT — " + a.current + " remaining");
+    }
     updateAmmoDisplay(item, container);
     save();
     const vibePattern = Array.from({ length: spent }, function (_, i) { return i === 0 ? 30 : [40, 30]; }).flat();
