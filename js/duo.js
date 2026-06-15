@@ -216,11 +216,13 @@
     return '' +
       '<section class="player-col" data-player="' + idx + '">' +
       '<div class="col-head">' +
+      '<div class="col-identity">' +
       '<button class="col-portrait" id="col-portrait-' + idx + '" aria-label="Choose portrait">' +
       '<img class="portrait-img" id="portrait-img-' + idx + '" alt="" draggable="false" hidden>' +
       '<span class="portrait-ph" id="portrait-ph-' + idx + '">TAP<br>TO SET</span>' +
       '</button>' +
       '<button class="duo-name-btn" id="name-btn-' + idx + '">PLAYER ' + (idx + 1) + '</button>' +
+      '</div>' +
       '<div class="health-monitor" id="health-monitor-' + idx + '">' +
       '<canvas id="ecg-canvas-' + idx + '" width="120" height="50"></canvas>' +
       '<div class="monitor-label" id="monitor-label-' + idx + '">STABLE</div>' +
@@ -242,6 +244,11 @@
       '<div class="detail-content" id="inventory-detail-content-' + idx + '"></div>' +
       '</div>' +
       '</section>' +
+      '</div>' +
+      '<div class="col-downed hidden" id="col-downed-' + idx + '">' +
+      '<div class="downed-text">CREW MEMBER</div>' +
+      '<div class="downed-big">PASSED OUT</div>' +
+      '<div class="downed-sub">AWAITING REVIVE</div>' +
       '</div>' +
       '</section>';
   }
@@ -361,6 +368,9 @@
 
     var stsEl = document.getElementById("block-stress-" + idx);
     stsEl.classList.toggle("critical", p.stress >= p.stressMax);
+
+    var downed = document.getElementById("col-downed-" + idx);
+    if (downed) downed.classList.toggle("hidden", p.hp > 0);
 
     updateMonitorLabel(idx);
   }
