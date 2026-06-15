@@ -26,6 +26,22 @@
   color: var(--primary);
 }
 
+/* RECORDS button (status bar) */
+.archive-open-btn {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  padding: 5px 9px;
+  border-radius: 3px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+.archive-open-btn:active { color: var(--primary); border-color: var(--primary-dim); }
+
 /* GM uplink indicator */
 .link-status {
   font-size: 10px;
@@ -371,4 +387,149 @@
 .col-gear .detail-view {
   padding: 10px 12px calc(var(--safe-bottom) + 16px);
   overflow-y: auto;
+}
+
+/* ---- Ship records overlay (shared journal + archives) ---- */
+.archive-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10003;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.85);
+}
+.archive-modal.hidden { display: none; }
+
+.archive-box {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  height: 100%;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-panel);
+  border: 1px solid var(--border-glow);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+}
+
+.archive-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+.archive-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 3px;
+  color: var(--primary);
+}
+.archive-close {
+  background: none;
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  width: 34px;
+  height: 34px;
+  border-radius: 3px;
+  font-size: 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.archive-close:active { color: var(--danger); border-color: var(--danger); }
+
+.archive-tabs { flex-shrink: 0; }
+
+.archive-body { flex: 1; min-height: 0; position: relative; }
+
+.arch-panel {
+  display: none;
+  position: absolute;
+  inset: 0;
+  flex-direction: column;
+  overflow: hidden;
+}
+.arch-panel.active { display: flex; }
+
+.entry-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.entry-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  text-align: left;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 12px 14px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.entry-row:active { border-color: var(--primary-dim); background: var(--bg-elevated); }
+
+.entry-type {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  border: 1px solid var(--border-color);
+  border-radius: 2px;
+  padding: 3px 6px;
+  min-width: 64px;
+  text-align: center;
+}
+.entry-type.type-log,
+.entry-type.type-memo { color: var(--primary); border-color: var(--primary-dim); }
+.entry-type.type-clue { color: #ffcc00; border-color: rgba(255, 204, 0, 0.4); }
+.entry-type.type-document { color: var(--text-bright); }
+.entry-type.type-image,
+.entry-type.type-video { color: #00d4ff; border-color: rgba(0, 212, 255, 0.4); }
+
+.entry-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.entry-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  letter-spacing: 1px;
+  color: var(--text-bright);
+}
+.entry-meta { font-size: 10px; letter-spacing: 1px; color: var(--text-dim); }
+
+.arch-panel .detail-view {
+  position: absolute;
+  inset: 0;
+  padding: 14px 16px calc(var(--safe-bottom) + 16px);
+  overflow-y: auto;
+  background: var(--bg-panel);
+}
+
+.journal-body { white-space: pre-wrap; line-height: 1.6; }
+
+.arch-media {
+  display: block;
+  width: 100%;
+  max-height: 50vh;
+  object-fit: contain;
+  background: #000;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  margin: 12px 0;
 }

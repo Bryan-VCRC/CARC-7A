@@ -1214,6 +1214,124 @@
     });
   }
 
+  // --- Ship records (shared journal + archives) ---
+  function archiveJournal() {
+    if (window.DUO_JOURNAL) return window.DUO_JOURNAL;
+    return (typeof JOURNAL_ENTRIES !== "undefined") ? JOURNAL_ENTRIES : [];
+  }
+  function archiveMedia() {
+    return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];
+  }
+
+  function entryRow(id, type, title, meta) {
+    return '<button class="entry-row" data-id="' + id + '">' +
+      '<span class="entry-type type-' + type + '">' + type.toUpperCase() + '</span>' +
+      '<span class="entry-main"><span class="entry-title">' + escapeHtml(title) + '</span>' +
+      (meta ? '<span class="entry-meta">' + escapeHtml(meta) + '</span>' : '') +
+      '</span></button>';
+  }
+
+  function renderArchJournalList() {
+    var list = document.getElementById("arch-journal-list");
+    var entries = archiveJournal();
+    if (!entries.length) { list.innerHTML = '<div class="empty-state"><div class="empty-text">NO LOGS RECOVERED</div></div>'; return; }
+    list.innerHTML = entries.map(function (e) {
+      var meta = (e.date || "") + (e.author ? " · " + e.author : "");
+      return entryRow(e.id, e.type, e.title, meta);
+    }).join("");
+    list.querySelectorAll(".entry-row").forEach(function (row) {
+      row.addEventListener("click", function () {
+        SFX.select();
+        var e = archiveJournal().find(function (x) { return x.id === row.dataset.id; });
+        if (e) showArchJournalDetail(e);
+      });
+    });
+  }
+
+  function showArchJournalDetail(e) {
+    var content = document.getElementById("arch-journal-detail-content");
+    var meta = '<span>' + escapeHtml(e.date || "") + '</span>' +
+      (e.author ? '<span>' + escapeHtml(e.author) + '</span>' : '') +
+      (e.classification ? '<span>' + escapeHtml(String(e.classification).toUpperCase()) + '</span>' : '');
+    content.innerHTML =
+      '<div class="doc-header"><div class="doc-title">' + escapeHtml(e.title) + '</div>' +
+      '<div class="doc-meta">' + meta + '</div></div>' +
+      '<div class="doc-body journal-body">' + escapeHtml(e.body || "") + '</div>';
+    document.getElementById("arch-journal-list").style.display = "none";
+    document.getElementById("arch-journal-detail").classList.remove("hidden");
+  }
+
+  function renderArchMediaList() {
+    var list = document.getElementById("arch-media-list");
+    var media = archiveMedia();
+    if (!media.length) { list.innerHTML = '<div class="empty-state"><div class="empty-text">NO ARCHIVES</div></div>'; return; }
+    list.innerHTML = media.map(function (m) {
+      return entryRow(m.id, m.type, m.name, m.date || "");
+    }).join("");
+    list.querySelectorAll(".entry-row").forEach(function (row) {
+      row.addEventListener("click", function () {
+        SFX.select();
+        var m = archiveMedia().find(function (x) { return x.id === row.dataset.id; });
+        if (m) showArchMediaDetail(m);
+      });
+    });
+  }
+
+  function showArchMediaDetail(m) {
+    var content = document.getElementById("arch-media-detail-content");
+    var mediaHtml = m.type === "video"
+      ? '<video src="' + m.src + '" controls playsinline class="arch-media"></video>'
+      : '<img src="' + m.src + '" alt="" class="arch-media" draggable="false">';
+    content.innerHTML =
+      '<div class="doc-header"><div class="doc-title">' + escapeHtml(m.name) + '</div>' +
+      '<div class="doc-meta"><span>' + escapeHtml(m.date || "") + '</span></div></div>' +
+      mediaHtml +
+      '<div class="doc-body">' + escapeHtml(m.description || "") + '</div>';
+    document.getElementById("arch-media-list").style.display = "none";
+    document.getElementById("arch-media-detail").classList.remove("hidden");
+  }
+
+  function switchArchTab(which) {
+    document.querySelectorAll(".archive-tabs .nav-tab").forEach(function (t) {
+      t.classList.toggle("active", t.dataset.arch === which);
+    });
+    document.getElementById("arch-journal").classList.toggle("active", which === "journal");
+    document.getElementById("arch-archives").classList.toggle("active", which === "archives");
+    SFX.tab();
+  }
+
+  function openArchive() {
+    SFX.select();
+    renderArchJournalList();
+    renderArchMediaList();
+    document.getElementById("archive-modal").classList.remove("hidden");
+  }
+
+  function closeArchive() {
+    SFX.back();
+    document.getElementById("archive-modal").classList.add("hidden");
+  }
+
+  function initArchive() {
+    document.getElementById("open-archive").addEventListener("click", openArchive);
+    document.getElementById("archive-close").addEventListener("click", closeArchive);
+    document.querySelectorAll(".archive-tabs .nav-tab").forEach(function (t) {
+      t.addEventListener("click", function () { switchArchTab(t.dataset.arch); });
+    });
+    document.querySelectorAll("[data-archback]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        SFX.back();
+        if (b.dataset.archback === "journal") {
+          document.getElementById("arch-journal-detail").classList.add("hidden");
+          document.getElementById("arch-journal-list").style.display = "";
+        } else {
+          document.getElementById("arch-media-detail").classList.add("hidden");
+          document.getElementById("arch-media-list").style.display = "";
+        }
+      });
+    });
+  }
+
   // --- Render everything ---
   function renderAll() {
     [0, 1].forEach(function (idx) {
@@ -1235,6 +1353,7 @@
     initEcgMonitors();
     initToggles();
     initIdentity();
+    initArchive();
     loadPortraits();
     renderAll();
     initSync();

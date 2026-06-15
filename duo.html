@@ -46,6 +46,8 @@
         <span class="status-label">CO-OP TERMINAL</span>
       </div>
       <div class="status-right">
+        <button id="open-archive" class="archive-open-btn" aria-label="Ship records">&#9636; RECORDS</button>
+        <span class="separator">|</span>
         <span id="link-status" class="link-status" title="GM link">&#9679; GM</span>
         <span class="separator">|</span>
         <span id="clock" class="clock"></span>
@@ -59,6 +61,36 @@
       <span class="footer-text">WARDEN PROTOCOL ACTIVE</span>
       <span class="footer-text">CO-OP MODE // 2 CREW</span>
     </footer>
+  </div>
+
+  <!-- Ship records: shared journal + archives -->
+  <div id="archive-modal" class="archive-modal hidden">
+    <div class="archive-box">
+      <header class="archive-head">
+        <span class="archive-title">SHIP RECORDS</span>
+        <button id="archive-close" class="archive-close" aria-label="Close">&#10005;</button>
+      </header>
+      <nav class="nav-tabs archive-tabs">
+        <button class="nav-tab active" data-arch="journal"><span>JOURNAL</span></button>
+        <button class="nav-tab" data-arch="archives"><span>ARCHIVES</span></button>
+      </nav>
+      <div class="archive-body">
+        <section id="arch-journal" class="arch-panel active">
+          <div id="arch-journal-list" class="entry-list"></div>
+          <div id="arch-journal-detail" class="detail-view hidden">
+            <button class="back-btn" data-archback="journal">&#9664; BACK TO INDEX</button>
+            <div id="arch-journal-detail-content" class="detail-content"></div>
+          </div>
+        </section>
+        <section id="arch-archives" class="arch-panel">
+          <div id="arch-media-list" class="entry-list"></div>
+          <div id="arch-media-detail" class="detail-view hidden">
+            <button class="back-btn" data-archback="archives">&#9664; BACK TO ARCHIVES</button>
+            <div id="arch-media-detail-content" class="detail-content"></div>
+          </div>
+        </section>
+      </div>
+    </div>
   </div>
 
   <!-- Crew identity picker: portrait carousel + name -->
@@ -84,6 +116,8 @@
 
   <script src="js/sync.js"></script>
   <script src="js/audio.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/duo-data.js"></script>
   <script src="js/duo.js"></script>
 </body>
 </html>
