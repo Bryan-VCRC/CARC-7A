@@ -76,13 +76,15 @@ function handle(msg) {
         activeTimers.push(t);
         break;
       }
-      case "blackout": { // cut to black, then a hard red snap
+      case "blackout": { // cut to black, hard red snap, then settle back to white
         setAll({ state: false });
         activeTimers.push(setTimeout(() => setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }), 1500));
+        activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 3200));
         break;
       }
-      case "corrupt": // glitchy magenta hold
+      case "corrupt": // glitchy magenta hold, then settle back to white
         setAll({ state: true, r: 180, g: 0, b: 80, dimming: 50 });
+        activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 1200));
         break;
       case "reboot": // power down, slow warm fade back up
         setAll({ state: false });
