@@ -10,6 +10,8 @@
     :root {
       --primary: #00ff9d;
       --primary-dim: #00cc7d;
+      --p1: #00ff9d;
+      --p2: #00d4ff;
       --danger: #ff3344;
       --warning: #ff6b35;
       --bg-deep: #0a0a0f;
@@ -532,75 +534,97 @@
       animation: pulse-dot 1.5s infinite;
     }
 
-    /* Co-op crew blocks */
+    /* Co-op crew console */
     .coop-link {
-      font-size: 9px;
+      font-size: 10px;
       letter-spacing: 2px;
       color: var(--text-dim);
-      margin-bottom: 12px;
+      margin-bottom: 16px;
     }
     .coop-link.online { color: var(--primary); }
 
     .coop-block {
       border: 1px solid var(--border-color);
-      border-radius: 2px;
-      padding: 12px;
-      margin-bottom: 14px;
-      background: rgba(255, 255, 255, 0.01);
+      border-radius: 4px;
+      margin-bottom: 20px;
+      background: var(--bg-panel);
+      overflow: hidden;
     }
+    .coop-block[data-coop="0"] { border-left: 3px solid var(--p1); }
+    .coop-block[data-coop="1"] { border-left: 3px solid var(--p2); }
+
+    .coop-block-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .coop-block[data-coop="0"] .coop-block-head { background: rgba(0, 255, 157, 0.07); }
+    .coop-block[data-coop="1"] .coop-block-head { background: rgba(0, 212, 255, 0.07); }
+
+    .coop-tag {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      padding: 3px 7px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    .coop-block[data-coop="0"] .coop-tag { color: var(--p1); border: 1px solid var(--p1); }
+    .coop-block[data-coop="1"] .coop-tag { color: var(--p2); border: 1px solid var(--p2); }
 
     .coop-name {
       font-family: var(--font-display);
-      font-size: 12px;
-      color: var(--primary);
-      letter-spacing: 2px;
-      margin-bottom: 10px;
+      font-weight: 700;
+      font-size: 22px;
+      letter-spacing: 3px;
       text-transform: uppercase;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
+    .coop-block[data-coop="0"] .coop-name { color: var(--p1); }
+    .coop-block[data-coop="1"] .coop-name { color: var(--p2); }
+
+    .coop-block-body { padding: 14px 16px; }
 
     .coop-additem {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 6px;
-      margin-top: 10px;
-      padding-top: 10px;
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+      padding-top: 14px;
       border-top: 1px dashed var(--border-color);
     }
 
-    .coop-additem .ci-name { grid-column: 1 / -1; }
-
-    .coop-additem input,
-    .coop-additem select {
-      padding: 8px 10px;
+    .coop-additem .ci-pick {
+      flex: 1;
+      min-width: 0;
+      padding: 11px 12px;
       background: var(--bg-surface);
       border: 1px solid var(--border-color);
       border-radius: 2px;
       color: var(--text-bright);
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: 1px;
       outline: none;
-      width: 100%;
     }
-
-    .coop-additem input:focus,
-    .coop-additem select:focus { border-color: var(--primary-dim); }
-
-    .coop-additem .ci-sub { display: none; }
-    .coop-additem .ci-sub.show { display: block; }
+    .coop-additem .ci-pick:focus { border-color: var(--primary-dim); }
 
     .coop-add-btn {
-      grid-column: 1 / -1;
-      padding: 10px;
+      flex-shrink: 0;
+      padding: 11px 16px;
       background: rgba(0, 255, 157, 0.08);
       border: 1px solid var(--primary-dim);
       color: var(--primary);
       font-family: var(--font-mono);
-      font-size: 11px;
+      font-size: 12px;
       letter-spacing: 2px;
       cursor: pointer;
       border-radius: 2px;
       -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
     }
 
     .coop-add-btn:active { background: rgba(0, 255, 157, 0.18); }
@@ -648,7 +672,7 @@
   </div>
 
   <div class="section">
-    <div class="section-title">Player Stats</div>
+    <div class="section-title">Single Player &mdash; Stats</div>
 
     <div class="stat-control" data-stat="hp" data-max-stat="hpMax">
       <span class="stat-control-label hp">HP</span>
@@ -697,7 +721,7 @@
   </div>
 
   <div class="section wound-log-section">
-    <div class="section-title">Wound Log</div>
+    <div class="section-title">Single Player &mdash; Wound Log</div>
     <div class="wound-add-row">
       <input type="text" id="wound-input" class="wound-input" placeholder="Describe the wound...">
       <button id="wound-add-btn" class="wound-add-btn">ADD</button>
@@ -1055,7 +1079,61 @@
     { name: "PLAYER 2", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
   ];
 
-  var ITEM_TYPES = ["weapon", "tool", "medical", "armor", "consumable", "keyitem", "misc"];
+  // Predefined gear the GM can hand out — full item objects mirroring the
+  // single-player catalog (icons, ammo/consumable trackers, fire modes, stats).
+  var CO_OP_ITEMS = [
+    { type: "weapon", name: "Revolver", icon: "icons/items/revolver.svg", quantity: 1,
+      description: "Six rounds, no frills. Loud enough to hear through a bulkhead.",
+      ammo: { current: 6, magCapacity: 6, spareMags: 2, magLabel: "Cylinder", spareLabel: "Speedloaders" },
+      fireModes: ["semi"], stats: { "Damage": "1d10", "Range": "Medium", "Condition": "Worn" } },
+    { type: "weapon", name: "Pulse Carbine", icon: "icons/items/carbine.svg", quantity: 1,
+      description: "Fires charged kinetic rounds. Accurate, reliable, kicks like a mule.",
+      ammo: { current: 20, magCapacity: 20, spareMags: 2, magLabel: "Magazine", spareLabel: "Magazines" },
+      fireModes: ["semi", "burst"], stats: { "Damage": "2d10 (Semi) / 3d10 (Burst)", "Range": "Long", "Condition": "Functional" } },
+    { type: "weapon", name: "Combat Knife", icon: "icons/items/knife.svg", quantity: 1,
+      description: "Standard issue. Works on anything that gets too close.",
+      stats: { "Damage": "1d10", "Range": "Adjacent", "Condition": "Sharp" } },
+    { type: "armor", name: "Light Military Armor", icon: "icons/items/armor.svg", quantity: 1,
+      description: "Ceramic plating over a flex underlayer. Won't stop everything. Stops enough.",
+      stats: { "Armor Points": "2 AP", "Speed Penalty": "-1 Speed", "Condition": "Scuffed" } },
+    { type: "armor", name: "Helmet", icon: "icons/items/helmet.svg", quantity: 1,
+      description: "Sealed, reinforced. Built-in visor with basic HUD.",
+      stats: { "Armor Points": "1 AP (Head)", "HUD": "Basic targeting, O2 readout", "Seal": "Vacuum-rated", "Condition": "Functional" } },
+    { type: "tool", name: "Flashlight", icon: "icons/items/flashlight.svg", quantity: 1,
+      description: "High-beam, long battery. The dark is everywhere out here.",
+      consumable: { current: 12, max: 12, unit: "hours", perUse: 1, verb: "DRAIN", useLabel: "USE 1 HOUR", depletedMsg: "BATTERY DEAD" },
+      stats: { "Beam": "High intensity", "Condition": "Functional" } },
+    { type: "medical", name: "First Aid Kit", icon: "icons/items/firstaid.svg", quantity: 1,
+      description: "Bandages, sealant foam, a basic stimshot. Buys time.",
+      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL 1d5", depletedMsg: "KIT EMPTY" },
+      stats: { "Heals": "1d5 Health per use", "Contents": "Bandages, foam sealant, stimshot" } },
+    { type: "consumable", name: "Combat Stim", icon: "icons/items/stim.svg", quantity: 1,
+      description: "One use. Keeps you moving when your body says stop. You'll feel it later.",
+      consumable: { current: 1, max: 1, unit: "dose", perUse: 1, verb: "INJECT", useLabel: "INJECT STIM", depletedMsg: "STIM SPENT" },
+      stats: { "Effect": "Ignore wounds, +1 Speed for 10 min", "Side Effect": "Stress +2 when it wears off" } },
+    { type: "consumable", name: "Rations", icon: "icons/items/rations.svg", quantity: 3,
+      description: "Three days of food bars. They taste like nothing on purpose.",
+      consumable: { current: 3, max: 3, unit: "days", perUse: 1, verb: "EAT", useLabel: "CONSUME RATION", depletedMsg: "NO RATIONS LEFT" },
+      stats: { "Nutrition": "1 day per unit", "Taste": "Intentionally absent" } },
+    { type: "tool", name: "Comms Unit", icon: "icons/items/comms.svg", quantity: 1,
+      description: "Short range radio. Works unless the ship doesn't want it to.",
+      stats: { "Range": "Short (shipboard)", "Encryption": "Standard", "Battery": "24 hours", "Condition": "Functional" } },
+    { type: "tool", name: "Paracord", icon: "icons/items/paracord.svg", quantity: 1,
+      description: "Fifty feet. Marines find a use for it every single time.",
+      stats: { "Length": "50 feet", "Rating": "550 lb tensile", "Condition": "New" } },
+  ];
+
+  function itemOptionLabel(it) {
+    if (it.ammo) return it.name + "  ·  " + it.ammo.magCapacity + " rd";
+    if (it.consumable) return it.name + "  ·  " + it.consumable.max + " " + it.consumable.unit;
+    return it.name;
+  }
+
+  function itemOptionsHTML() {
+    return CO_OP_ITEMS.map(function (it, i) {
+      return '<option value="' + i + '">' + itemOptionLabel(it) + '</option>';
+    }).join("");
+  }
 
   function coopStatRow(idx, stat, label, cls) {
     var maxStat = stat + "Max";
@@ -1075,29 +1153,19 @@
   }
 
   function coopBlockHTML(idx) {
-    var typeOpts = ITEM_TYPES.map(function (t) {
-      return '<option value="' + t + '"' + (t === "misc" ? " selected" : "") + '>' + t.toUpperCase() + '</option>';
-    }).join("");
     return '' +
       '<div class="coop-block" data-coop="' + idx + '">' +
-      '<div class="coop-name" data-name="' + idx + '">' + coop[idx].name + '</div>' +
+      '<div class="coop-block-head">' +
+      '<span class="coop-tag">P' + (idx + 1) + '</span>' +
+      '<span class="coop-name" data-name="' + idx + '">' + coop[idx].name + '</span>' +
+      '</div>' +
+      '<div class="coop-block-body">' +
       coopStatRow(idx, "hp", "HP", "hp") +
       coopStatRow(idx, "stress", "STRESS", "stress") +
       '<div class="coop-additem">' +
-      '<input class="ci-name" type="text" maxlength="28" placeholder="Item name...">' +
-      '<select class="ci-type">' + typeOpts + '</select>' +
-      '<input class="ci-qty" type="number" min="1" value="1" placeholder="Qty">' +
-      '<select class="ci-tracker">' +
-      '<option value="none" selected>NO TRACKER</option>' +
-      '<option value="ammo">AMMO</option>' +
-      '<option value="uses">USES</option>' +
-      '</select>' +
-      '<input class="ci-desc" type="text" maxlength="120" placeholder="Description (optional)" style="grid-column:1/-1;">' +
-      '<input class="ci-cap ci-sub" type="number" min="1" value="6" placeholder="Mag capacity">' +
-      '<input class="ci-spare ci-sub" type="number" min="0" value="1" placeholder="Spare mags">' +
-      '<input class="ci-uses ci-sub" type="number" min="1" value="3" placeholder="Max uses" style="grid-column:1/-1;">' +
-      '<button class="coop-add-btn">+ ADD ITEM TO ' + coop[idx].name + '</button>' +
-      '</div></div>';
+      '<select class="ci-pick">' + itemOptionsHTML() + '</select>' +
+      '<button class="coop-add-btn">+ GIVE</button>' +
+      '</div></div></div>';
   }
 
   function renderCoopValues() {
@@ -1108,8 +1176,6 @@
         var el = block.querySelector('[data-val="' + k + '"]');
         if (el) el.textContent = coop[idx][k];
       });
-      var addBtn = block.querySelector(".coop-add-btn");
-      if (addBtn) addBtn.textContent = "+ ADD ITEM TO " + coop[idx].name;
     });
   }
 
@@ -1159,37 +1225,13 @@
         });
       });
 
-      // Tracker sub-fields show/hide
-      var tracker = block.querySelector(".ci-tracker");
-      var cap = block.querySelector(".ci-cap");
-      var spare = block.querySelector(".ci-spare");
-      var uses = block.querySelector(".ci-uses");
-      function syncTracker() {
-        cap.classList.toggle("show", tracker.value === "ammo");
-        spare.classList.toggle("show", tracker.value === "ammo");
-        uses.classList.toggle("show", tracker.value === "uses");
-      }
-      tracker.addEventListener("change", syncTracker);
-      syncTracker();
-
-      // Add item
+      // Give a predefined item to this player
       block.querySelector(".coop-add-btn").addEventListener("click", function () {
-        var name = block.querySelector(".ci-name").value.trim();
-        if (!name) { block.querySelector(".ci-name").focus(); return; }
-        var spec = {
-          name: name,
-          type: block.querySelector(".ci-type").value,
-          quantity: block.querySelector(".ci-qty").value,
-          description: block.querySelector(".ci-desc").value,
-          tracker: tracker.value,
-          magCapacity: cap.value,
-          spareMags: spare.value,
-          maxUses: uses.value,
-        };
-        GameSync.send({ type: "coop-add-item", player: idx, item: spec });
-        block.querySelector(".ci-name").value = "";
-        block.querySelector(".ci-desc").value = "";
-        log("P" + (idx + 1) + " GIVEN ITEM: " + name, "ok");
+        var pick = block.querySelector(".ci-pick");
+        var item = CO_OP_ITEMS[parseInt(pick.value, 10)];
+        if (!item) return;
+        GameSync.send({ type: "coop-add-item", player: idx, item: item });
+        log("P" + (idx + 1) + " GIVEN ITEM: " + item.name, "ok");
       });
     });
   }

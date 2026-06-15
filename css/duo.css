@@ -77,7 +77,7 @@
 
 .duo-name-input {
   width: 100%;
-  max-width: 220px;
+  max-width: 260px;
   text-align: center;
   background: rgba(0, 0, 0, 0.35);
   border: 1px solid var(--border-color);
@@ -85,13 +85,21 @@
   color: var(--text-bright);
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 14px;
+  font-size: 20px;
   letter-spacing: 2px;
-  padding: 8px 10px;
+  padding: 11px 12px;
   text-transform: uppercase;
   -webkit-user-select: text;
   user-select: text;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Per-player accent (mirrors the GM console: P1 green, P2 cyan) */
+.player-col[data-player="0"] .duo-name-input { color: #00ff9d; }
+.player-col[data-player="1"] .duo-name-input { color: #00d4ff; }
+.player-col[data-player="1"] .duo-name-input:focus {
+  border-color: #00d4ff;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.35);
 }
 
 .duo-name-input::placeholder {

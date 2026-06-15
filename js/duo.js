@@ -605,9 +605,10 @@
 
   // Pick the recorded sound that fits the item being consumed.
   function consumableSound(item) {
-    if (item.type === "medical") return SFX.heal();
-    if (item.type === "consumable") return SFX.eat();
-    return SFX.use();
+    var verb = item.consumable && item.consumable.verb;
+    if (verb === "EAT") return SFX.eat();
+    if (item.type === "medical" || verb === "APPLY" || verb === "INJECT") return SFX.heal();
+    return SFX.use(); // batteries, generic charges, etc.
   }
 
   function useConsumable(idx, item, container) {
@@ -655,6 +656,22 @@
 
   // --- GM-driven item creation (received over sync) ---
   function buildItemFromSpec(spec) {
+    spec = spec || {};
+
+    // Predefined catalog item from the GM console: a full item object
+    // (icon, ammo/consumable, fireModes, stats). Clone it and re-id.
+    if (spec.ammo || spec.consumable || spec.icon || spec.stats || spec.fireModes) {
+      var full = clone(spec);
+      full.id = genId();
+      full.type = full.type || "misc";
+      full.name = full.name || "Unknown Item";
+      full.quantity = Math.max(1, parseInt(full.quantity, 10) || 1);
+      full.description = full.description || "No description.";
+      if (!full.stats || typeof full.stats !== "object") full.stats = {};
+      return full;
+    }
+
+    // Legacy simplified spec (name/type/tracker fields)
     var type = spec.type || "misc";
     var item = {
       id: genId(),
