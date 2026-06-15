@@ -22,6 +22,11 @@ const BROADCAST_ADDR = "255.255.255.255";
 // Restore color when fear ends / after a panic effect settles (warm white).
 const RESTORE = { r: 255, g: 170, b: 90, dimming: 80 };
 
+// Strobe tuning. interval is the ms between on/off flips — WiZ bulbs realistically
+// bottom out around 70-90ms (faster than that drops UDP frames / looks ragged).
+// flashes = number of light pulses before settling back to RESTORE.
+const STROBE = { flashes: 4, interval: 80, color: { r: 255, g: 0, b: 0, dimming: 100 } };
+
 const sock = dgram.createSocket("udp4");
 const bulbs = new Set();        // discovered (or configured) bulb IPs
 let configured = false;         // true when IPs come from WIZ_BULBS (skip discovery)
@@ -50,6 +55,24 @@ function clearEffects() {
   activeTimers = [];
 }
 
+// Hard-ish strobe: flip full-on color <-> off at a fixed interval, then settle.
+// opts: { flashes, interval, color }. WiZ's built-in fade softens the edges a
+// bit — set WIZ_NO_FADE=1 to try disabling it (see start()).
+function strobe(opts) {
+  opts = opts || {};
+  const flashes = opts.flashes || STROBE.flashes;
+  const interval = opts.interval || STROBE.interval;
+  const color = opts.color || STROBE.color;
+  let n = 0;
+  const steps = flashes * 2; // each flash = on + off
+  const t = setInterval(() => {
+    setAll(n % 2 === 0 ? { state: true, ...color } : { state: false });
+    n++;
+    if (n >= steps) { clearInterval(t); setAll({ state: true, ...RESTORE }); }
+  }, interval);
+  activeTimers.push(t);
+}
+
 // --- Map game events to light behavior ---
 function handle(msg) {
   if (!msg || !msg.type) return;
@@ -67,15 +90,9 @@ function handle(msg) {
   if (msg.type === "panic") {
     clearEffects();
     switch (msg.action) {
-      case "glitch": { // rapid red strobe, then settle
-        let n = 0;
-        const t = setInterval(() => {
-          setAll(n++ % 2 ? { state: false } : { state: true, r: 255, g: 0, b: 0, dimming: 100 });
-          if (n > 6) { clearInterval(t); setAll({ state: true, ...RESTORE }); }
-        }, 90);
-        activeTimers.push(t);
+      case "glitch": // rapid red strobe, then settle
+        strobe();
         break;
-      }
       case "blackout": { // cut to black, hard red snap, then settle back to white
         setAll({ state: false });
         activeTimers.push(setTimeout(() => setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }), 1500));
@@ -101,12 +118,25 @@ function discover() {
   try { sock.send(probe, WIZ_PORT, BROADCAST_ADDR); } catch {}
 }
 
+// Opt-in: try to disable the bulb's built-in fade for a crisper strobe.
+// WIZ_NO_FADE=1 enables it. This writes a persistent setting to the bulb
+// (firmware-dependent — not all models honor it). Best-effort; reversible via
+// the WiZ app or by sending non-zero values.
+const NO_FADE = /^(1|true|yes)$/i.test(process.env.WIZ_NO_FADE || "");
+
+function applyNoFade() {
+  if (!NO_FADE) return;
+  for (const ip of bulbs) sendTo(ip, { method: "setUserConfig", params: { fadeIn: 0, fadeOut: 0 } });
+  console.log("  WiZ:     fade disabled (WIZ_NO_FADE) — crisper strobe");
+}
+
 function start() {
   const fromEnv = (process.env.WIZ_BULBS || "").split(",").map(s => s.trim()).filter(Boolean);
   if (fromEnv.length) {
     configured = true;
     fromEnv.forEach(ip => bulbs.add(ip));
     console.log(`  WiZ:     ${fromEnv.length} bulb(s) configured: ${fromEnv.join(", ")}`);
+    applyNoFade();
     return;
   }
   sock.bind(() => {
@@ -115,6 +145,7 @@ function start() {
     setInterval(discover, 60000).unref?.();
     setTimeout(() => {
       console.log(`  WiZ:     ${bulbs.size} bulb(s) discovered${bulbs.size ? ": " + [...bulbs].join(", ") : " (will keep scanning)"}`);
+      applyNoFade();
     }, 1500);
   });
 }
