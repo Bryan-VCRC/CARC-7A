@@ -2,6 +2,7 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { WebSocketServer } = require("ws");
+const wiz = require("./wiz");
 
 const PORT = process.env.PORT || 3000;
 
@@ -69,6 +70,9 @@ wss.on("connection", (ws) => {
       return;
     }
 
+    // Drive WiZ light ambience off Fear / Panic events (best-effort)
+    wiz.handle(msg);
+
     // Broadcast to all OTHER connected clients
     for (const c of clients) {
       if (c !== client && c.ws.readyState === 1) {
@@ -98,4 +102,5 @@ server.listen(PORT, "0.0.0.0", () => {
   console.log(`  Local:   http://localhost:${PORT}`);
   console.log(`  Network: http://${lanIP}:${PORT}`);
   console.log(`  Admin:   http://${lanIP}:${PORT}/admin.html\n`);
+  wiz.start();
 });
