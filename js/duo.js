@@ -717,6 +717,8 @@
     };
   }
 
+  var seenItemNonces = []; // recently applied coop-add-item nonces (dedupe)
+
   function handleSyncMessage(msg) {
     if (!msg || typeof msg !== "object") return;
 
@@ -752,6 +754,13 @@
     }
 
     if (msg.type === "coop-add-item") {
+      // GameSync delivers over WebSocket AND BroadcastChannel; ignore the
+      // duplicate copy so a single "give" doesn't add the item twice.
+      if (msg.nonce) {
+        if (seenItemNonces.indexOf(msg.nonce) !== -1) return;
+        seenItemNonces.push(msg.nonce);
+        if (seenItemNonces.length > 50) seenItemNonces.shift();
+      }
       var pi = msg.player === 1 ? 1 : 0;
       STATE.players[pi].inventory.push(buildItemFromSpec(msg.item || {}));
       SFX.use();

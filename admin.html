@@ -1230,7 +1230,8 @@
         var pick = block.querySelector(".ci-pick");
         var item = CO_OP_ITEMS[parseInt(pick.value, 10)];
         if (!item) return;
-        GameSync.send({ type: "coop-add-item", player: idx, item: item });
+        var nonce = Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        GameSync.send({ type: "coop-add-item", player: idx, item: item, nonce: nonce });
         log("P" + (idx + 1) + " GIVEN ITEM: " + item.name, "ok");
       });
     });

@@ -43,7 +43,12 @@ const server = http.createServer((req, res) => {
       res.writeHead(404);
       return res.end("Not found");
     }
-    res.writeHead(200, { "Content-Type": MIME[ext] || "application/octet-stream" });
+    res.writeHead(200, {
+      "Content-Type": MIME[ext] || "application/octet-stream",
+      // Local game server — always serve fresh code so tablets don't run
+      // a stale cached duo.js/admin.html after an update.
+      "Cache-Control": "no-store",
+    });
     res.end(data);
   });
 });
