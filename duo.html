@@ -11,6 +11,7 @@
   <title>ISV CORRIGAN // CO-OP TERMINAL</title>
   <link rel="stylesheet" href="css/main.css">
   <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/panels.css">
   <link rel="stylesheet" href="css/duo.css">
 </head>
 <body>
@@ -48,46 +49,72 @@
     </header>
 
     <!-- Player toggle -->
-    <nav class="nav-tabs">
-      <button class="nav-tab active" data-player="0"><span>PLAYER 1</span></button>
-      <button class="nav-tab" data-player="1"><span>PLAYER 2</span></button>
+    <nav class="nav-tabs player-tabs">
+      <button class="nav-tab active" data-player="0"><span class="tab-name" id="tab-name-0">PLAYER 1</span></button>
+      <button class="nav-tab" data-player="1"><span class="tab-name" id="tab-name-1">PLAYER 2</span></button>
     </nav>
 
-    <!-- Active player vitals -->
-    <main class="content duo-content">
-      <div class="duo-monitor">
-        <div class="health-monitor" id="health-monitor">
-          <canvas id="ecg-canvas" width="120" height="50"></canvas>
-          <div class="monitor-label" id="monitor-label">FINE</div>
-        </div>
-        <div class="duo-player-name" id="duo-player-name">PLAYER 1</div>
-      </div>
+    <!-- View toggle -->
+    <nav class="nav-tabs sub-tabs">
+      <button class="nav-tab active" data-view="vitals"><span>VITALS</span></button>
+      <button class="nav-tab" data-view="gear"><span>GEAR</span></button>
+    </nav>
 
-      <!-- HP -->
-      <div class="duo-stat stat-hp" id="block-hp">
-        <div class="duo-stat-header">
-          <span class="stat-name">HP</span>
-          <span class="stat-numbers"><span id="stat-hp">6</span><span class="stat-sep">/</span><span id="stat-hp-max">6</span></span>
-        </div>
-        <div class="stat-pips" id="pips-hp"></div>
-        <div class="duo-steppers">
-          <button class="stepper-btn minus" data-stat="hp" data-dir="-1">&minus;</button>
-          <button class="stepper-btn plus" data-stat="hp" data-dir="1">+</button>
-        </div>
-      </div>
+    <main class="content">
+      <!-- VITALS PANEL -->
+      <section id="panel-vitals" class="panel active">
+        <div class="duo-content">
+          <div class="duo-monitor">
+            <div class="health-monitor" id="health-monitor">
+              <canvas id="ecg-canvas" width="120" height="50"></canvas>
+              <div class="monitor-label" id="monitor-label">STABLE</div>
+            </div>
+            <input id="player-name-input" class="duo-name-input" maxlength="16" placeholder="ENTER NAME" aria-label="Player name" autocomplete="off">
+          </div>
 
-      <!-- STRESS -->
-      <div class="duo-stat stat-stress" id="block-stress">
-        <div class="duo-stat-header">
-          <span class="stat-name">STRESS</span>
-          <span class="stat-numbers"><span id="stat-stress">0</span><span class="stat-sep">/</span><span id="stat-stress-max">6</span></span>
+          <!-- HP -->
+          <div class="duo-stat stat-hp" id="block-hp">
+            <div class="duo-stat-header">
+              <span class="stat-name">HP</span>
+              <span class="stat-numbers"><span id="stat-hp">6</span><span class="stat-sep">/</span><span id="stat-hp-max">6</span></span>
+            </div>
+            <div class="stat-pips" id="pips-hp"></div>
+            <div class="duo-steppers">
+              <button class="stepper-btn minus" data-stat="hp" data-dir="-1">&minus;</button>
+              <button class="stepper-btn plus" data-stat="hp" data-dir="1">+</button>
+            </div>
+          </div>
+
+          <!-- STRESS -->
+          <div class="duo-stat stat-stress" id="block-stress">
+            <div class="duo-stat-header">
+              <span class="stat-name">STRESS</span>
+              <span class="stat-numbers"><span id="stat-stress">0</span><span class="stat-sep">/</span><span id="stat-stress-max">6</span></span>
+            </div>
+            <div class="stat-pips" id="pips-stress"></div>
+            <div class="duo-steppers">
+              <button class="stepper-btn minus" data-stat="stress" data-dir="-1">&minus;</button>
+              <button class="stepper-btn plus" data-stat="stress" data-dir="1">+</button>
+            </div>
+          </div>
         </div>
-        <div class="stat-pips" id="pips-stress"></div>
-        <div class="duo-steppers">
-          <button class="stepper-btn minus" data-stat="stress" data-dir="-1">&minus;</button>
-          <button class="stepper-btn plus" data-stat="stress" data-dir="1">+</button>
+      </section>
+
+      <!-- GEAR PANEL -->
+      <section id="panel-gear" class="panel">
+        <div class="panel-header">
+          <h2><span class="flicker">&#9646;</span> <span id="gear-owner">PLAYER 1</span> // GEAR</h2>
+          <div class="panel-controls">
+            <button id="add-item-btn" class="add-item-btn">+ ADD ITEM</button>
+          </div>
         </div>
-      </div>
+        <div id="inventory-grid" class="inventory-grid"></div>
+        <!-- Item detail view -->
+        <div id="inventory-detail" class="detail-view hidden">
+          <button class="back-btn" id="gear-back">&#9664; BACK TO GEAR</button>
+          <div id="inventory-detail-content" class="detail-content"></div>
+        </div>
+      </section>
     </main>
 
     <footer class="footer-bar">
@@ -101,11 +128,51 @@
     <div class="reset-modal-backdrop"></div>
     <div class="reset-modal-box">
       <div class="reset-modal-icon">&#9888;</div>
-      <div class="reset-modal-title">RESET VITALS</div>
-      <div class="reset-modal-text">Both crew members will be restored to full HP and zero Stress.</div>
+      <div class="reset-modal-title">RESET CREW</div>
+      <div class="reset-modal-text">Both crew members will be restored to full HP, zero Stress, and their starting loadout. Names and added items will be lost.</div>
       <div class="reset-modal-actions">
         <button id="reset-cancel" class="reset-modal-btn cancel">ABORT</button>
         <button id="reset-confirm" class="reset-modal-btn confirm">RESET BOTH</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add item modal -->
+  <div id="item-modal" class="form-modal hidden">
+    <div class="form-modal-backdrop"></div>
+    <div class="form-modal-box">
+      <div class="form-modal-title">ADD ITEM</div>
+      <label class="form-field"><span>NAME</span><input id="f-name" type="text" maxlength="28" autocomplete="off"></label>
+      <label class="form-field"><span>TYPE</span>
+        <select id="f-type" class="sci-select">
+          <option value="weapon">WEAPON</option>
+          <option value="tool">TOOL</option>
+          <option value="medical">MEDICAL</option>
+          <option value="armor">ARMOR</option>
+          <option value="consumable">CONSUMABLE</option>
+          <option value="keyitem">KEY ITEM</option>
+          <option value="misc" selected>MISC</option>
+        </select>
+      </label>
+      <label class="form-field"><span>QUANTITY</span><input id="f-qty" type="number" min="1" value="1"></label>
+      <label class="form-field"><span>DESCRIPTION</span><input id="f-desc" type="text" maxlength="120" autocomplete="off"></label>
+      <label class="form-field"><span>TRACKER</span>
+        <select id="f-tracker" class="sci-select">
+          <option value="none" selected>NONE</option>
+          <option value="ammo">AMMO (mag + spares)</option>
+          <option value="uses">USES (consumable)</option>
+        </select>
+      </label>
+      <div id="f-ammo-fields" class="form-sub hidden">
+        <label class="form-field"><span>MAG CAPACITY</span><input id="f-cap" type="number" min="1" value="6"></label>
+        <label class="form-field"><span>SPARE MAGS</span><input id="f-spare" type="number" min="0" value="1"></label>
+      </div>
+      <div id="f-uses-fields" class="form-sub hidden">
+        <label class="form-field"><span>MAX USES</span><input id="f-uses" type="number" min="1" value="3"></label>
+      </div>
+      <div class="form-modal-actions">
+        <button id="item-cancel" class="reset-modal-btn cancel">CANCEL</button>
+        <button id="item-add" class="reset-modal-btn confirm">ADD</button>
       </div>
     </div>
   </div>
