@@ -13,6 +13,7 @@
   <link rel="stylesheet" href="css/animations.css">
   <link rel="stylesheet" href="css/panels.css">
   <link rel="stylesheet" href="css/duo.css">
+  <link rel="stylesheet" href="css/fear.css">
 </head>
 <body>
   <!-- Boot sequence overlay -->
@@ -26,6 +27,14 @@
   <!-- CRT overlay effects -->
   <div class="crt-overlay"></div>
   <div class="scanlines"></div>
+  <div class="fear-static"></div>
+  <div class="blackout-overlay" id="blackout-overlay"></div>
+  <div class="reboot-overlay" id="reboot-overlay">
+    <div class="reboot-text">SYSTEM FAILURE</div>
+    <div class="reboot-sub">EMERGENCY REBOOT IN PROGRESS</div>
+    <div class="reboot-progress"><div class="reboot-progress-bar" id="reboot-bar"></div></div>
+    <div class="reboot-sub" style="margin-top: 16px;">DO NOT POWER OFF</div>
+  </div>
 
   <!-- Main app shell -->
   <div id="app" class="app hidden">

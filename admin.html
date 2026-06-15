@@ -756,6 +756,14 @@
   const channel = new BroadcastChannel("carc7a_admin");
   let fearActive = false;
 
+  // Fear/panic must reach the co-op terminal too, which may be on another
+  // device — GameSync covers WebSocket + BroadcastChannel; fall back to the
+  // local channel only if the sync layer somehow isn't present.
+  function broadcast(msg) {
+    if (window.GameSync) GameSync.send(msg);
+    else channel.postMessage(msg);
+  }
+
   function log(msg, type) {
     const list = document.getElementById("admin-log-list");
     const now = new Date();
@@ -774,7 +782,7 @@
   document.getElementById("fear-toggle").addEventListener("click", function () {
     fearActive = !fearActive;
     this.classList.toggle("active", fearActive);
-    channel.postMessage({ type: "fear", active: fearActive });
+    broadcast({ type: "fear", active: fearActive });
     if (fearActive) {
       log("FEAR MODE ENGAGED", "fear");
     } else {
@@ -793,7 +801,7 @@
   panicBtns.forEach(function (btn) {
     btn.addEventListener("click", function () {
       var cmd = btn.dataset.cmd;
-      channel.postMessage({ type: "panic", action: cmd });
+      broadcast({ type: "panic", action: cmd });
       log("PANIC: " + panicLabels[cmd], "warn");
     });
   });

@@ -708,6 +708,23 @@
       return;
     }
 
+    if (msg.type === "fear") {
+      if (msg.active) {
+        document.body.classList.add("fear-active");
+        SFX.fearStart();
+        startFearDrone();
+      } else {
+        document.body.classList.remove("fear-active");
+        stopFearDrone();
+      }
+      return;
+    }
+
+    if (msg.type === "panic") {
+      handlePanic(msg.action);
+      return;
+    }
+
     if (msg.type === "coop-stat") {
       var idx = msg.player === 1 ? 1 : 0;
       var p = STATE.players[idx];
@@ -735,6 +752,143 @@
       GameSync.send(snapshot());
       return;
     }
+  }
+
+  // --- Atmosphere effects (driven by the GM console) ---
+  var fearDrone = null;
+
+  function handlePanic(action) {
+    if (action === "glitch") panicGlitch();
+    else if (action === "blackout") panicBlackout();
+    else if (action === "corrupt") panicCorrupt();
+    else if (action === "reboot") panicReboot();
+  }
+
+  function panicGlitch() {
+    SFX.fearStart();
+    document.body.classList.add("panic-glitch");
+    if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80, 40, 100]);
+    setTimeout(function () { document.body.classList.remove("panic-glitch"); }, 600);
+  }
+
+  function panicBlackout() {
+    var overlay = document.getElementById("blackout-overlay");
+    overlay.classList.add("active");
+    SFX.panicHit();
+    if (navigator.vibrate) navigator.vibrate(200);
+    setTimeout(function () { overlay.classList.remove("active"); }, 1500);
+    setTimeout(function () { overlay.classList.add("active"); }, 1700);
+    setTimeout(function () { overlay.classList.remove("active"); }, 1900);
+    setTimeout(function () { overlay.classList.add("active"); }, 2000);
+    setTimeout(function () { overlay.classList.remove("active"); }, 3200);
+  }
+
+  function panicCorrupt() {
+    SFX.panicHit();
+    document.body.classList.add("panic-corrupt");
+    if (navigator.vibrate) navigator.vibrate([80, 50, 80, 50, 80]);
+    var clock = document.getElementById("clock");
+    var saved = clock.textContent;
+    clock.textContent = "E̵R̶R̸O̷R̵";
+    setTimeout(function () {
+      document.body.classList.remove("panic-corrupt");
+      clock.textContent = saved;
+    }, 1000);
+  }
+
+  function panicReboot() {
+    var overlay = document.getElementById("reboot-overlay");
+    var bar = document.getElementById("reboot-bar");
+    overlay.classList.add("active");
+    stopFearDrone();
+    SFX.panicHit();
+    if (navigator.vibrate) navigator.vibrate(300);
+
+    bar.style.width = "0%";
+    var progress = 0;
+    var interval = setInterval(function () {
+      progress += 2 + Math.random() * 8;
+      if (progress > 100) progress = 100;
+      bar.style.width = progress + "%";
+      if (progress >= 100) {
+        clearInterval(interval);
+        setTimeout(function () {
+          overlay.classList.remove("active");
+          bar.style.width = "0%";
+          if (document.body.classList.contains("fear-active")) startFearDrone();
+        }, 800);
+      }
+    }, 150);
+  }
+
+  function startFearDrone() {
+    if (fearDrone) return;
+    if (!SFX.ensureContext()) return;
+    const ctx = SFX._ctx();
+    if (!ctx) return;
+
+    const lfo = ctx.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.5;
+    const lfoGain = ctx.createGain();
+    lfoGain.gain.value = 15;
+    lfo.connect(lfoGain);
+
+    const bass = ctx.createOscillator();
+    bass.type = "sawtooth";
+    bass.frequency.value = 28;
+    lfoGain.connect(bass.frequency);
+    const bassGain = ctx.createGain();
+    bassGain.gain.value = 0.06;
+    bass.connect(bassGain);
+    bassGain.connect(ctx.destination);
+
+    const whine = ctx.createOscillator();
+    whine.type = "sine";
+    whine.frequency.value = 4200;
+    const whineGain = ctx.createGain();
+    whineGain.gain.value = 0.03;
+    whine.connect(whineGain);
+    whineGain.connect(ctx.destination);
+
+    const bufLen = ctx.sampleRate * 2;
+    const noiseBuf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+    const noiseData = noiseBuf.getChannelData(0);
+    for (let i = 0; i < bufLen; i++) noiseData[i] = Math.random() * 2 - 1;
+    const noise = ctx.createBufferSource();
+    noise.buffer = noiseBuf;
+    noise.loop = true;
+    const noiseFilt = ctx.createBiquadFilter();
+    noiseFilt.type = "bandpass";
+    noiseFilt.frequency.value = 2000;
+    noiseFilt.Q.value = 0.5;
+    const noiseGain = ctx.createGain();
+    noiseGain.gain.value = 0.04;
+    noise.connect(noiseFilt);
+    noiseFilt.connect(noiseGain);
+    noiseGain.connect(ctx.destination);
+
+    lfo.start();
+    bass.start();
+    whine.start();
+    noise.start();
+
+    fearDrone = { lfo: lfo, bass: bass, whine: whine, noise: noise, bassGain: bassGain, whineGain: whineGain, noiseGain: noiseGain };
+  }
+
+  function stopFearDrone() {
+    if (!fearDrone) return;
+    const d = fearDrone;
+    fearDrone = null;
+    try {
+      d.lfo.stop();
+      d.bass.stop();
+      d.whine.stop();
+      d.noise.stop();
+      d.bassGain.disconnect();
+      d.whineGain.disconnect();
+      d.noiseGain.disconnect();
+    } catch (e) {}
   }
 
   function initSync() {
