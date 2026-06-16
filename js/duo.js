@@ -75,6 +75,7 @@
   const STATE = {
     view: ["vitals", "vitals"], // per-player sub-view
     openItem: [null, null],     // id of the item whose detail is open, per column
+    notes: [],                  // field notes recovered (revealed by the GM)
     players: [makePlayer(), makePlayer()],
   };
 
@@ -89,7 +90,7 @@
 
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, players: STATE.players }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, players: STATE.players }));
     } catch (e) { /* storage unavailable — fail silently */ }
   }
 
@@ -113,6 +114,7 @@
           });
         }
       });
+      if (Array.isArray(data.notes)) STATE.notes = data.notes;
       // Per-player view (older saves stored a single string)
       if (Array.isArray(data.view)) {
         data.view.slice(0, 2).forEach(function (v, i) {
@@ -882,6 +884,19 @@
   }
 
   var seenItemNonces = []; // recently applied coop-add-item nonces (dedupe)
+  var toastTimer = null;
+
+  function showToast(msg) {
+    var el = document.getElementById("duo-toast");
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove("hidden");
+    // force reflow so re-triggers re-run the transition
+    void el.offsetWidth;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2600);
+  }
 
   function handleSyncMessage(msg) {
     if (!msg || typeof msg !== "object") return;
@@ -970,6 +985,29 @@
         if (STATE.openItem[pi] && STATE.openItem[pi] === target.id) showInventoryDetail(pi, target);
         else if (!STATE.openItem[pi]) renderInventory(pi);
       }
+      save();
+      return;
+    }
+
+    if (msg.type === "coop-note") {
+      var note = msg.note;
+      if (!note || !note.id) return;
+      if (STATE.notes.some(function (n) { return n.id === note.id; })) return; // already recovered
+      STATE.notes.unshift({
+        id: note.id,
+        type: "note",
+        title: note.title || "Recovered Note",
+        date: "RECOVERED // T4-84",
+        author: "FIELD NOTE",
+        classification: note.tone || "",
+        body: note.body || "",
+      });
+      if (SFX.radioSwitch) SFX.radioSwitch();
+      setTimeout(function () { if (SFX.radioStatic) SFX.radioStatic(); }, 180);
+      if (navigator.vibrate) navigator.vibrate([20, 60, 20]);
+      switchArchTab("journal");
+      renderArchJournalList();
+      showToast("NEW LOG RECOVERED");
       save();
       return;
     }
@@ -1260,8 +1298,9 @@
 
   // --- Ship records (shared journal + archives) ---
   function archiveJournal() {
-    if (window.DUO_JOURNAL) return window.DUO_JOURNAL;
-    return (typeof JOURNAL_ENTRIES !== "undefined") ? JOURNAL_ENTRIES : [];
+    var base = window.DUO_JOURNAL || ((typeof JOURNAL_ENTRIES !== "undefined") ? JOURNAL_ENTRIES : []);
+    // Recovered field notes sit on top (newest first), then the briefing.
+    return STATE.notes.concat(base);
   }
   function archiveMedia() {
     return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];

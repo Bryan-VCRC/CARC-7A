@@ -469,6 +469,10 @@
   preloadSample("radioStatic", "data/media/soundeffects/radio_static.mp3");
   function playRadioStatic() { playSample("radioStatic", 0.7); }
 
+  // --- Radio switch: short click/squelch (recovered-note cue) ---
+  preloadSample("radioSwitch", "data/media/soundeffects/radio_switch.wav");
+  function playRadioSwitch() { if (!playSample("radioSwitch", 0.6)) playFilter(); }
+
   // --- Heal: medkit recording (falls back to the generic use blip) ---
   function playHeal() { if (!playSample("heal", 0.8)) playUse(); }
 
@@ -500,6 +504,7 @@
     reloadRifle: playRifleReload,
     shotRifle: playRifleShot,
     radioStatic: playRadioStatic,
+    radioSwitch: playRadioSwitch,
     heal: playHeal,
     eat: playEat,
     fearStart: playFearStart,

@@ -508,6 +508,31 @@
 
 .journal-body { white-space: pre-wrap; line-height: 1.6; }
 
+.entry-type.type-note { color: #ffcc00; border-color: rgba(255, 204, 0, 0.4); }
+
+/* Recovered-note toast */
+.duo-toast {
+  position: fixed;
+  top: 54px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  z-index: 10050;
+  background: rgba(10, 10, 15, 0.95);
+  border: 1px solid var(--primary-dim);
+  color: var(--primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 2px;
+  padding: 10px 18px;
+  border-radius: 3px;
+  box-shadow: 0 0 22px rgba(0, 255, 157, 0.25);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.duo-toast.hidden { display: none; }
+.duo-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
 .arch-media {
   display: block;
   width: 100%;

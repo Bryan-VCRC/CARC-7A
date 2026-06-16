@@ -644,6 +644,49 @@
     }
 
     .coop-reset-btn:active { background: rgba(255, 51, 68, 0.18); }
+
+    /* Field notes */
+    .fn-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      margin-bottom: 6px;
+    }
+    .fn-tone {
+      flex-shrink: 0;
+      font-size: 8px;
+      letter-spacing: 1px;
+      padding: 3px 6px;
+      border-radius: 2px;
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+      min-width: 56px;
+      text-align: center;
+    }
+    .fn-tone.casual { color: var(--primary); border-color: var(--primary-dim); }
+    .fn-tone.dread { color: var(--warning); border-color: rgba(255, 107, 53, 0.4); }
+    .fn-tone.cryptic { color: var(--danger); border-color: rgba(255, 51, 68, 0.4); }
+    .fn-title { flex: 1; font-size: 11px; letter-spacing: 1px; color: var(--text-bright); min-width: 0; }
+    .fn-reveal {
+      flex-shrink: 0;
+      padding: 8px 12px;
+      background: rgba(0, 255, 157, 0.08);
+      border: 1px solid var(--primary-dim);
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fn-reveal:active { background: rgba(0, 255, 157, 0.2); }
+    .fn-row.revealed { opacity: 0.5; }
+    .fn-row.revealed .fn-reveal { color: var(--text-dim); border-color: var(--border-color); background: none; }
   </style>
 </head>
 <body>
@@ -737,6 +780,11 @@
   </div>
 
   <div class="section">
+    <div class="section-title">Field Notes &mdash; Reveal to Crew</div>
+    <div id="field-notes"></div>
+  </div>
+
+  <div class="section">
     <div class="section-title">Atmosphere Controls</div>
 
     <button class="admin-btn" id="fear-toggle">
@@ -781,6 +829,7 @@
   </div>
 
 <script src="js/sync.js"></script>
+<script src="js/duo-notes.js"></script>
 <script>
 (function () {
   "use strict";
@@ -1301,6 +1350,32 @@
     // Pull current vitals from the terminal (covers same-browser BroadcastChannel too)
     GameSync.send({ type: "request-state" });
   }
+
+  // --- Field Notes: reveal letters/notes to the crew terminal ---
+  (function buildFieldNotes() {
+    var wrap = document.getElementById("field-notes");
+    var notes = window.DUO_NOTES || [];
+    if (!notes.length) {
+      wrap.innerHTML = '<div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">No notes loaded.</div>';
+      return;
+    }
+    wrap.innerHTML = notes.map(function (n) {
+      return '<div class="fn-row" data-id="' + n.id + '">' +
+        '<span class="fn-tone ' + n.tone + '">' + n.tone.toUpperCase() + '</span>' +
+        '<span class="fn-title">' + escapeHtml(n.title) + '</span>' +
+        '<button class="fn-reveal">REVEAL</button>' +
+        '</div>';
+    }).join("");
+    wrap.querySelectorAll(".fn-row").forEach(function (row) {
+      var n = notes.find(function (x) { return x.id === row.dataset.id; });
+      row.querySelector(".fn-reveal").addEventListener("click", function () {
+        if (window.GameSync) GameSync.send({ type: "coop-note", note: { id: n.id, title: n.title, body: n.body, tone: n.tone } });
+        row.classList.add("revealed");
+        this.textContent = "SENT";
+        log("REVEALED: " + n.title, "ok");
+      });
+    });
+  })();
 
   log("GM console ready. Awaiting commands.", "ok");
 })();
