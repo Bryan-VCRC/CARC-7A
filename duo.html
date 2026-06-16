@@ -67,17 +67,9 @@
         <div class="archive-body">
           <section id="arch-journal" class="arch-panel active">
             <div id="arch-journal-list" class="entry-list"></div>
-            <div id="arch-journal-detail" class="detail-view hidden">
-              <button class="back-btn" data-archback="journal">&#9664; BACK TO INDEX</button>
-              <div id="arch-journal-detail-content" class="detail-content"></div>
-            </div>
           </section>
           <section id="arch-archives" class="arch-panel">
             <div id="arch-media-list" class="entry-list"></div>
-            <div id="arch-media-detail" class="detail-view hidden">
-              <button class="back-btn" data-archback="archives">&#9664; BACK TO ARCHIVES</button>
-              <div id="arch-media-detail-content" class="detail-content"></div>
-            </div>
           </section>
         </div>
       </section>
@@ -89,6 +81,15 @@
     </footer>
 
     <div id="duo-toast" class="duo-toast hidden"></div>
+  </div>
+
+  <!-- Full-screen reader for a journal entry / archive item -->
+  <div id="record-modal" class="record-modal hidden">
+    <div class="record-backdrop"></div>
+    <div class="record-box">
+      <button id="record-close" class="record-close" aria-label="Close">&#10005; CLOSE</button>
+      <div id="record-content" class="record-content"></div>
+    </div>
   </div>
 
   <!-- Crew identity picker: portrait carousel + name -->

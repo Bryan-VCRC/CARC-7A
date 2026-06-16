@@ -1017,9 +1017,7 @@
       STATE.view = ["vitals", "vitals"];
       STATE.notes = []; // recovered field notes clear back to the starter journal
       SFX.bootDone();
-      // return the journal to its index and re-render with notes removed
-      document.getElementById("arch-journal-detail").classList.add("hidden");
-      document.getElementById("arch-journal-list").style.display = "";
+      closeRecord();
       renderArchJournalList();
       renderAll();
       save();
@@ -1336,17 +1334,27 @@
     });
   }
 
+  function openRecord(html) {
+    var content = document.getElementById("record-content");
+    content.innerHTML = html;
+    var box = document.querySelector("#record-modal .record-box");
+    if (box) box.scrollTop = 0;
+    document.getElementById("record-modal").classList.remove("hidden");
+  }
+
+  function closeRecord() {
+    document.getElementById("record-modal").classList.add("hidden");
+  }
+
   function showArchJournalDetail(e) {
-    var content = document.getElementById("arch-journal-detail-content");
     var meta = '<span>' + escapeHtml(e.date || "") + '</span>' +
       (e.author ? '<span>' + escapeHtml(e.author) + '</span>' : '') +
       (e.classification ? '<span>' + escapeHtml(String(e.classification).toUpperCase()) + '</span>' : '');
-    content.innerHTML =
+    openRecord(
       '<div class="doc-header"><div class="doc-title">' + escapeHtml(e.title) + '</div>' +
       '<div class="doc-meta">' + meta + '</div></div>' +
-      '<div class="doc-body journal-body">' + escapeHtml(e.body || "") + '</div>';
-    document.getElementById("arch-journal-list").style.display = "none";
-    document.getElementById("arch-journal-detail").classList.remove("hidden");
+      '<div class="doc-body journal-body">' + escapeHtml(e.body || "") + '</div>'
+    );
   }
 
   function renderArchMediaList() {
@@ -1366,17 +1374,15 @@
   }
 
   function showArchMediaDetail(m) {
-    var content = document.getElementById("arch-media-detail-content");
     var mediaHtml = m.type === "video"
       ? '<video src="' + m.src + '" controls playsinline class="arch-media"></video>'
       : '<img src="' + m.src + '" alt="" class="arch-media" draggable="false">';
-    content.innerHTML =
+    openRecord(
       '<div class="doc-header"><div class="doc-title">' + escapeHtml(m.name) + '</div>' +
       '<div class="doc-meta"><span>' + escapeHtml(m.date || "") + '</span></div></div>' +
       mediaHtml +
-      '<div class="doc-body">' + escapeHtml(m.description || "") + '</div>';
-    document.getElementById("arch-media-list").style.display = "none";
-    document.getElementById("arch-media-detail").classList.remove("hidden");
+      '<div class="doc-body">' + escapeHtml(m.description || "") + '</div>'
+    );
   }
 
   function switchArchTab(which) {
@@ -1394,18 +1400,8 @@
     document.querySelectorAll(".archive-tabs .nav-tab").forEach(function (t) {
       t.addEventListener("click", function () { switchArchTab(t.dataset.arch); });
     });
-    document.querySelectorAll("[data-archback]").forEach(function (b) {
-      b.addEventListener("click", function () {
-        SFX.back();
-        if (b.dataset.archback === "journal") {
-          document.getElementById("arch-journal-detail").classList.add("hidden");
-          document.getElementById("arch-journal-list").style.display = "";
-        } else {
-          document.getElementById("arch-media-detail").classList.add("hidden");
-          document.getElementById("arch-media-list").style.display = "";
-        }
-      });
-    });
+    document.getElementById("record-close").addEventListener("click", function () { SFX.back(); closeRecord(); });
+    document.querySelector("#record-modal .record-backdrop").addEventListener("click", function () { SFX.back(); closeRecord(); });
   }
 
   // --- Render everything ---
