@@ -12,20 +12,20 @@
   window.DUO_NOTES = [
     // --- casual / goofy (early; makes the scary stuff land harder) ---
     {
-      id: "note-ration", tone: "casual", title: "Note Taped to the Snack Locker",
-      body: "ROLLO. If you ate my space-cookies AGAIN, I am going to lose it.\nThose were MINE. I labeled the box. I drew a little angry face on it and everything.\n\n— Vess"
+      id: "note-ration", tone: "casual", title: "Note SLAMMED on the Snack Locker",
+      body: "DID SOMEONE EAT MY OREOS AGAIN???\nThese were MINE. I hid them. I LABELED them. I drew a skull on the box.\nIf I find out who did it, I am launching you out the airlock myself.\nI'm not even mad. Okay I'm a little mad. I'm extremely mad.\n\n— Vess"
     },
     {
-      id: "note-roster", tone: "casual", title: "Chore List (with Complaints)",
-      body: "CAKE DUTY: Mara\nFLYING THE SHIP: Dolan\nCLEANING THE VENTS: Tuck\n\n(scribbled at the bottom)\nDo NOT let Tuck decorate the cake again. He used KETCHUP. On a CAKE."
+      id: "note-roster", tone: "casual", title: "Chore List (Heavily Vandalized)",
+      body: "CAKE DUTY: Mara\nFLY THE SHIP: Dolan\nVENT DUTY: Tuck\n\n(scribbled all over)\nWHY is it ALWAYS me on vents?? I've done it SIX times in a row. Tuck has done it ZERO times. ZERO. This is rigged.\nAlso Tuck is banned from cake forever. We do not talk about the ketchup incident."
     },
     {
       id: "note-card", tone: "casual", title: "Birthday Card",
-      body: "38 missions and you STILL park the ship like a maniac.\nHappy birthday, Captain Crash.\n\n— from your favorite (and only) crew"
+      body: "38 missions and you STILL fly like you're being chased by bees.\nHappy birthday, Captain Crash.\nPlease, for the love of everything, let someone else park next time.\n\n— everyone. unanimously."
     },
     {
-      id: "note-memo", tone: "casual", title: "Note on the Fridge",
-      body: "REMINDER FOR EVERYONE:\nThe weird thing in the vents is NOT a pet.\nStop feeding it snacks. Stop giving it a name.\n\n(Greg. This means you, Greg.)\n— Captain Aliz"
+      id: "note-memo", tone: "casual", title: "Note Stuck to the Fridge",
+      body: "OKAY. Who keeps feeding the thing in the vents.\nIt is NOT a pet. It is NOT cute. It does NOT need a name.\nGREG. We all know it's you, Greg. I can see you reading this. STOP.\n\n— Capt. Aliz"
     },
 
     // --- dread (the bulk; simple words, big creepy ideas) ---
