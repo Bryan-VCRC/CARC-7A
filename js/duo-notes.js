@@ -40,7 +40,7 @@
     },
     {
       id: "note-comms", tone: "dread", title: "Radio Note",
-      body: "It has Mara's voice now.\nMara has been gone since Tuesday.\nThe radio still says goodnight in her voice.\n\nWe stopped saying it back."
+      body: "Mara still says goodnight over the radio. Same time, every night.\nWe tried answering — asked her where she is, told her to come to the bridge.\nShe just says goodnight.\nShe's been gone a week.\nIt's her voice. We don't think it's her.\nWe stopped answering."
     },
     {
       id: "note-party", tone: "dread", title: "The Party",
@@ -52,7 +52,7 @@
     },
     {
       id: "note-mimic", tone: "dread", title: "Watch Note",
-      body: "It isn't always in the vents.\nSometimes it's the chair. The locker. The crate you walked past twice.\nIf it moves, shoot it and go. Don't stay to watch.\n\nThe ones who stayed to watch didn't leave notes."
+      body: "The Stowaways copy the furniture. A chair. A crate. The locker that was open a second ago.\nWhile they're pretending, bullets do nothing — you just make noise and bring more.\nThey have to open up to grab you. That half-second is the only time a shot lands.\nOne round to make it flinch, then RUN.\nThe ones who stayed to finish the job didn't leave notes."
     },
     {
       id: "note-lastentry", tone: "dread", title: "Last Entry",
