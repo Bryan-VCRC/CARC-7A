@@ -65,8 +65,8 @@
       body: "DON'T COUNT THEM.\nIT LIKES BEING COUNTED."
     },
     {
-      id: "note-allpresent", tone: "cryptic", title: "A Page of Tally Marks",
-      body: "(hundreds of little marks, then, in different ink:)\n\nWE ARE ALL HERE.\nWE ARE ALL HERE.\nWE ARE ALL FINE."
+      id: "note-allpresent", tone: "cryptic", effect: "allhere", title: "A Page Full of the Same Words",
+      body: "WE ARE ALL HERE.\n".repeat(60).trim()
     },
     {
       id: "note-rule", tone: "cryptic", title: "Scratched Into a Table",

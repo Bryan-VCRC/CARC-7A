@@ -465,9 +465,41 @@
   // --- Rifle single shot: mag-fed weapons (falls back to the revolver shot) ---
   function playRifleShot() { if (!playSample("rifleShot", 0.9)) playGunshot(); }
 
-  // --- Radio static: Silent Hill-style comms burst ---
+  // --- Radio static: Silent Hill-style comms bed (toggle on/off, loops) ---
   preloadSample("radioStatic", "data/media/soundeffects/radio_static.mp3");
-  function playRadioStatic() { playSample("radioStatic", 0.7); }
+  function playRadioStatic() { playSample("radioStatic", 0.7); } // one-shot (kept for misc use)
+
+  var staticSrc = null;
+  var staticWanted = false;
+  function startRadioStaticLoop() {
+    if (!ensureContext() || staticSrc) return;
+    var s = samples["radioStatic"];
+    if (!s) return;
+    function play(buffer) {
+      if (staticSrc || !staticWanted) return;
+      var src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      var g = ctx.createGain();
+      g.gain.value = 0.5;
+      src.connect(g);
+      g.connect(ctx.destination);
+      src.start();
+      staticSrc = { src: src, gain: g };
+    }
+    if (s.decoded) play(s.decoded);
+    else if (s.raw) ctx.decodeAudioData(s.raw.slice(0), function (d) { s.decoded = d; s.raw = null; play(d); });
+  }
+  function stopRadioStaticLoop() {
+    if (!staticSrc) return;
+    try { staticSrc.src.stop(); staticSrc.src.disconnect(); staticSrc.gain.disconnect(); } catch (e) {}
+    staticSrc = null;
+  }
+  // Returns true if it's now ON, false if now OFF.
+  function toggleRadioStatic() {
+    if (staticSrc || staticWanted) { staticWanted = false; stopRadioStaticLoop(); return false; }
+    staticWanted = true; startRadioStaticLoop(); return true;
+  }
 
   // --- Radio switch: short click/squelch (recovered-note cue) ---
   preloadSample("radioSwitch", "data/media/soundeffects/radio_switch.wav");
@@ -504,6 +536,7 @@
     reloadRifle: playRifleReload,
     shotRifle: playRifleShot,
     radioStatic: playRadioStatic,
+    radioStaticToggle: toggleRadioStatic,
     radioSwitch: playRadioSwitch,
     heal: playHeal,
     eat: playEat,

@@ -197,6 +197,12 @@
       box-shadow: 0 0 15px rgba(255, 51, 68, 0.2);
     }
 
+    .panic-btn.active {
+      background: rgba(255, 51, 68, 0.18);
+      border-color: var(--danger);
+      box-shadow: 0 0 15px rgba(255, 51, 68, 0.2);
+    }
+
     .panic-btn .btn-icon {
       font-size: 18px;
       display: block;
@@ -841,6 +847,7 @@
   // device — GameSync covers WebSocket + BroadcastChannel; fall back to the
   // local channel only if the sync layer somehow isn't present.
   function broadcast(msg) {
+    msg.nonce = Date.now() + "-" + Math.random().toString(36).slice(2, 7);
     if (window.GameSync) GameSync.send(msg);
     else channel.postMessage(msg);
   }
@@ -885,7 +892,13 @@
     btn.addEventListener("click", function () {
       var cmd = btn.dataset.cmd;
       broadcast({ type: "panic", action: cmd });
-      log("PANIC: " + panicLabels[cmd], "warn");
+      // Radio static is a toggle — reflect on/off; others are momentary.
+      if (cmd === "static") {
+        var on = btn.classList.toggle("active");
+        log("RADIO STATIC: " + (on ? "ON" : "OFF"), on ? "warn" : "ok");
+      } else {
+        log("PANIC: " + panicLabels[cmd], "warn");
+      }
     });
   });
 

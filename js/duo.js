@@ -76,6 +76,7 @@
     view: ["vitals", "vitals"], // per-player sub-view
     openItem: [null, null],     // id of the item whose detail is open, per column
     notes: [],                  // field notes recovered (revealed by the GM)
+    allHereDone: false,         // the "WE ARE ALL HERE" set-piece has played once
     players: [makePlayer(), makePlayer()],
   };
 
@@ -90,7 +91,7 @@
 
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, players: STATE.players }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, allHereDone: STATE.allHereDone, players: STATE.players }));
     } catch (e) { /* storage unavailable — fail silently */ }
   }
 
@@ -115,6 +116,7 @@
         }
       });
       if (Array.isArray(data.notes)) STATE.notes = data.notes;
+      if (typeof data.allHereDone === "boolean") STATE.allHereDone = data.allHereDone;
       // Per-player view (older saves stored a single string)
       if (Array.isArray(data.view)) {
         data.view.slice(0, 2).forEach(function (v, i) {
@@ -884,6 +886,7 @@
   }
 
   var seenItemNonces = []; // recently applied coop-add-item nonces (dedupe)
+  var seenFxNonces = [];   // recently applied fear/panic nonces (dedupe WS+BC double)
   var toastTimer = null;
 
   function showToast(msg) {
@@ -904,6 +907,16 @@
     if (msg.type === "request-state") {
       GameSync.send(snapshot());
       return;
+    }
+
+    if (msg.type === "fear" || msg.type === "panic") {
+      // GameSync delivers over WS + BroadcastChannel; drop the duplicate so a
+      // single press doesn't fire (or toggle) twice.
+      if (msg.nonce) {
+        if (seenFxNonces.indexOf(msg.nonce) !== -1) return;
+        seenFxNonces.push(msg.nonce);
+        if (seenFxNonces.length > 40) seenFxNonces.shift();
+      }
     }
 
     if (msg.type === "fear") {
@@ -1001,10 +1014,11 @@
         author: "FIELD NOTE",
         classification: note.tone || "",
         body: note.body || "",
+        effect: note.effect || null,
       });
+      // Subtle UI cue only — revealing a note must NOT fire the atmosphere triggers.
       if (SFX.radioSwitch) SFX.radioSwitch();
-      setTimeout(function () { if (SFX.radioStatic) SFX.radioStatic(); }, 180);
-      if (navigator.vibrate) navigator.vibrate([20, 60, 20]);
+      if (navigator.vibrate) navigator.vibrate(20);
       switchArchTab("journal");
       renderArchJournalList();
       showToast("NEW LOG RECOVERED");
@@ -1016,6 +1030,7 @@
       STATE.players = [makePlayer(), makePlayer()];
       STATE.view = ["vitals", "vitals"];
       STATE.notes = []; // recovered field notes clear back to the starter journal
+      STATE.allHereDone = false; // the set-piece can play again next game
       SFX.bootDone();
       closeRecord();
       renderArchJournalList();
@@ -1053,10 +1068,11 @@
     setTimeout(function () { overlay.classList.remove("active"); }, t + 60);
   }
 
-  // Silent Hill-style radio static burst.
+  // Silent Hill-style radio static — toggles on/off.
   function panicStatic() {
-    if (SFX.radioStatic) SFX.radioStatic();
-    if (navigator.vibrate) navigator.vibrate([200, 80, 200]);
+    if (SFX.radioStaticToggle) SFX.radioStaticToggle();
+    else if (SFX.radioStatic) SFX.radioStatic();
+    if (navigator.vibrate) navigator.vibrate(60);
   }
 
   function panicGlitch() {
@@ -1347,6 +1363,14 @@
   }
 
   function showArchJournalDetail(e) {
+    // One-time set-piece: the "WE ARE ALL HERE" page writes itself out,
+    // accelerates, fear takes hold, then the terminal force-reboots.
+    if (e.effect === "allhere" && !STATE.allHereDone) {
+      STATE.allHereDone = true;
+      save();
+      runAllHereSequence(e);
+      return;
+    }
     var meta = '<span>' + escapeHtml(e.date || "") + '</span>' +
       (e.author ? '<span>' + escapeHtml(e.author) + '</span>' : '') +
       (e.classification ? '<span>' + escapeHtml(String(e.classification).toUpperCase()) + '</span>' : '');
@@ -1371,6 +1395,54 @@
         if (m) showArchMediaDetail(m);
       });
     });
+  }
+
+  function runAllHereSequence(e) {
+    openRecord(
+      '<div class="doc-header"><div class="doc-title">' + escapeHtml(e.title) + '</div>' +
+      '<div class="doc-meta"><span>' + escapeHtml(e.date || "") + '</span></div></div>' +
+      '<div class="doc-body journal-body" id="allhere-stream"></div>'
+    );
+    var stream = document.getElementById("allhere-stream");
+    var box = document.querySelector("#record-modal .record-box");
+    var LINE = "WE ARE ALL HERE.\n";
+
+    function append(n) {
+      var s = "";
+      for (var i = 0; i < n; i++) s += LINE;
+      stream.textContent += s;
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    // Build an accelerating timeline: slow → fast → (fear) → frantic → reboot.
+    var steps = [];
+    for (var i = 0; i < 6; i++) steps.push({ delay: 210, n: 1 });   // slow, deliberate
+    for (i = 0; i < 14; i++) steps.push({ delay: 60, n: 1 });        // speeding up
+    steps.push({ delay: 60, fear: true, n: 1 });                     // fear takes hold
+    for (i = 0; i < 40; i++) steps.push({ delay: 26, n: 3 });        // faster
+    for (i = 0; i < 26; i++) steps.push({ delay: 12, n: 9 });        // endless
+    steps.push({ reboot: true });
+
+    var idx = 0;
+    (function tick() {
+      if (idx >= steps.length) return;
+      var st = steps[idx++];
+      if (st.fear) {
+        document.body.classList.add("fear-active");
+        SFX.fearStart();
+        startFearDrone();
+      }
+      if (st.n) append(st.n);
+      if (st.reboot) {
+        // Full stop: clear fear so the reboot ends in silence, then reboot.
+        document.body.classList.remove("fear-active");
+        stopFearDrone();
+        closeRecord();
+        panicReboot();
+        return;
+      }
+      setTimeout(tick, st.delay);
+    })();
   }
 
   function showArchMediaDetail(m) {
