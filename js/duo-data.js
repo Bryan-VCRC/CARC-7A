@@ -59,25 +59,34 @@ IT TOOK US.`
     }
   ];
 
-  // Archives tab — T4-84 imagery (replaces the off-story solo media).
+  // Archives tab — T4-84 imagery. Each image only appears once its related
+  // journal entry / field note is in play (see `requires` -> a journal id).
+  // The exterior/approach are tied to the always-present approach log; the
+  // interior shots unlock as the GM reveals the matching notes.
   window.DUO_ARCHIVES = [
     { id: "arc-exterior", type: "image", name: "T4-84 — Exterior", date: "ON APPROACH",
+      requires: "duo-approach",
       description: "The survey cruiser, adrift. Hull intact. Nearly every window dark. One beacon still blinking.",
       src: "data/media/duos/OutsideShip.png" },
     { id: "arc-approach", type: "image", name: "Docking View", date: "T4-84 // DOCKING",
+      requires: "duo-approach",
       description: "One warm light burning somewhere deep inside an otherwise lightless ship. The comms light won't stop blinking.",
       src: "data/media/duos/CruiserApproaching.png" },
     { id: "arc-corridor", type: "image", name: "Deck Corridor", date: "INTERIOR",
-      description: "Empty. Fogged. The emergency lights still cycle for no one.",
+      requires: "note-vents",
+      description: "Empty. Fogged. The emergency lights still cycle for no one. The air's damp down here — mildew and cold ozone.",
       src: "data/media/duos/EmptyCorridor.png" },
     { id: "arc-hold", type: "image", name: "Main Hold", date: "INTERIOR",
-      description: "Someone's birthday. The banner's half torn down. The cake was never cut.",
+      requires: "note-party",
+      description: "Someone's birthday. The banner's half torn down, the cake never cut. It smells sweet in here — old frosting and burnt-out wax — and something sour underneath.",
       src: "data/media/duos/HappyBirthday.png" },
     { id: "arc-weapons", type: "image", name: "Weapons Bay", date: "INTERIOR",
-      description: "Mounts torn open, rifles snapped, spent casings across the deck. A fight — and no one left to find.",
+      requires: "note-mimic",
+      description: "Mounts torn open, rifles snapped, spent casings across the deck. The air still carries burnt propellant. A fight — and no one left to find.",
       src: "data/media/duos/LostFight.png" },
     { id: "arc-airlock", type: "image", name: "By the Airlock", date: "INTERIOR",
-      description: "Boots. Lined up. Toes squared to the wall. Nobody wearing them. Nothing here is messy anymore.",
+      requires: "note-arranged",
+      description: "Boots. Lined up. Toes squared to the wall. Nobody wearing them. It smells like cold metal over here. Clean. Too clean.",
       src: "data/media/duos/OrganizedBoots.png" },
   ];
 })();

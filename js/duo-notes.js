@@ -44,11 +44,11 @@
     },
     {
       id: "note-party", tone: "dread", title: "The Main Hold", image: "data/media/duos/HappyBirthday.png",
-      body: "Looks like a birthday. The banner's torn off mid-word.\nThe cake's still on the table — candles burned down to stubs, never cut.\nMost of the chairs are pushed in neat. One sits a little apart, squared up to the table.\nLike someone got up in the middle of it, and something tidied the chair back in for them."
+      body: "Looks like a birthday. The banner's torn off mid-word.\nThe cake's still on the table — candles burned down to stubs, never cut.\nThe air's sweet in here. Old frosting, burnt-out wax, and something sour underneath it you can't place.\nMost of the chairs are pushed in neat. One sits a little apart, squared up to the table.\nLike someone got up in the middle of it, and something tidied the chair back in for them."
     },
     {
       id: "note-arranged", tone: "dread", title: "By the Airlock", image: "data/media/duos/OrganizedBoots.png",
-      body: "A pair of boots by the airlock. Laced, set side by side, toes squared to the wall.\nA jacket folded on top.\nNo sign of whoever was wearing them.\nWhatever happened here, it left everything tidy."
+      body: "A pair of boots by the airlock. Laced, set side by side, toes squared to the wall.\nA jacket folded on top.\nNo sign of whoever was wearing them.\nIt smells like cold metal and ozone over here. Clean. Too clean.\nWhatever happened, it left everything tidy."
     },
     {
       id: "note-mimic", tone: "dread", title: "Watch Note",

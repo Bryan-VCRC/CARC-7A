@@ -1022,6 +1022,7 @@
       if (navigator.vibrate) navigator.vibrate(20);
       switchArchTab("journal");
       renderArchJournalList();
+      renderArchMediaList(); // a note may unlock a related archive image
       showToast("NEW LOG RECOVERED");
       save();
       return;
@@ -1035,6 +1036,7 @@
       SFX.bootDone();
       closeRecord();
       renderArchJournalList();
+      renderArchMediaList();
       renderAll();
       save();
       GameSync.send(snapshot());
@@ -1323,8 +1325,11 @@
     return STATE.notes.concat(base);
   }
   function archiveMedia() {
-    if (window.DUO_ARCHIVES) return window.DUO_ARCHIVES;
-    return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];
+    if (!window.DUO_ARCHIVES) return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];
+    // Only show an image once its related journal entry/note is in play.
+    var present = {};
+    archiveJournal().forEach(function (e) { present[e.id] = true; });
+    return window.DUO_ARCHIVES.filter(function (m) { return !m.requires || present[m.requires]; });
   }
 
   function entryRow(id, type, title, meta) {
