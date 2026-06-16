@@ -58,4 +58,26 @@ Three words.
 IT TOOK US.`
     }
   ];
+
+  // Archives tab — T4-84 imagery (replaces the off-story solo media).
+  window.DUO_ARCHIVES = [
+    { id: "arc-exterior", type: "image", name: "T4-84 — Exterior", date: "ON APPROACH",
+      description: "The survey cruiser, adrift. Hull intact. Nearly every window dark. One beacon still blinking.",
+      src: "data/media/duos/OutsideShip.png" },
+    { id: "arc-approach", type: "image", name: "Docking View", date: "T4-84 // DOCKING",
+      description: "One warm light burning somewhere deep inside an otherwise lightless ship. The comms light won't stop blinking.",
+      src: "data/media/duos/CruiserApproaching.png" },
+    { id: "arc-corridor", type: "image", name: "Deck Corridor", date: "INTERIOR",
+      description: "Empty. Fogged. The emergency lights still cycle for no one.",
+      src: "data/media/duos/EmptyCorridor.png" },
+    { id: "arc-hold", type: "image", name: "Main Hold", date: "INTERIOR",
+      description: "Someone's birthday. The banner's half torn down. The cake was never cut.",
+      src: "data/media/duos/HappyBirthday.png" },
+    { id: "arc-weapons", type: "image", name: "Weapons Bay", date: "INTERIOR",
+      description: "Mounts torn open, rifles snapped, spent casings across the deck. A fight — and no one left to find.",
+      src: "data/media/duos/LostFight.png" },
+    { id: "arc-airlock", type: "image", name: "By the Airlock", date: "INTERIOR",
+      description: "Boots. Lined up. Toes squared to the wall. Nobody wearing them. Nothing here is messy anymore.",
+      src: "data/media/duos/OrganizedBoots.png" },
+  ];
 })();

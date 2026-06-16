@@ -1015,6 +1015,7 @@
         classification: note.tone || "",
         body: note.body || "",
         effect: note.effect || null,
+        image: note.image || null,
       });
       // Subtle UI cue only — revealing a note must NOT fire the atmosphere triggers.
       if (SFX.radioSwitch) SFX.radioSwitch();
@@ -1322,6 +1323,7 @@
     return STATE.notes.concat(base);
   }
   function archiveMedia() {
+    if (window.DUO_ARCHIVES) return window.DUO_ARCHIVES;
     return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];
   }
 
@@ -1374,9 +1376,11 @@
     var meta = '<span>' + escapeHtml(e.date || "") + '</span>' +
       (e.author ? '<span>' + escapeHtml(e.author) + '</span>' : '') +
       (e.classification ? '<span>' + escapeHtml(String(e.classification).toUpperCase()) + '</span>' : '');
+    var img = e.image ? '<img class="arch-media" src="' + e.image + '" alt="" draggable="false">' : "";
     openRecord(
       '<div class="doc-header"><div class="doc-title">' + escapeHtml(e.title) + '</div>' +
       '<div class="doc-meta">' + meta + '</div></div>' +
+      img +
       '<div class="doc-body journal-body">' + escapeHtml(e.body || "") + '</div>'
     );
   }

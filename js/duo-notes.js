@@ -43,11 +43,11 @@
       body: "Mara still says goodnight over the radio. Same time, every night.\nWe tried answering — asked her where she is, told her to come to the bridge.\nShe just says goodnight.\nShe's been gone a week.\nIt's her voice. We don't think it's her.\nWe stopped answering."
     },
     {
-      id: "note-party", tone: "dread", title: "The Party",
+      id: "note-party", tone: "dread", title: "The Party", image: "data/media/duos/HappyBirthday.png",
       body: "The lights went out during the cake.\nWhen they came back, Dolan's chair was empty.\nSomeone had pushed it in.\n\nWe finished the song. I don't know why we finished the song."
     },
     {
-      id: "note-arranged", tone: "dread", title: "By the Door",
+      id: "note-arranged", tone: "dread", title: "By the Door", image: "data/media/duos/OrganizedBoots.png",
       body: "Found Pavel's boots by the airlock.\nLaced. Side by side. Toes to the wall.\nPavel isn't here.\n\nNothing on this ship is messy anymore."
     },
     {
@@ -66,6 +66,7 @@
     },
     {
       id: "note-allpresent", tone: "cryptic", effect: "allhere", title: "A Page Full of the Same Words",
+      image: "data/media/duos/wearehere.png",
       body: "WE ARE ALL HERE.\n".repeat(60).trim()
     },
     {

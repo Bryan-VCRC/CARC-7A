@@ -1388,7 +1388,7 @@
     wrap.querySelectorAll(".fn-row").forEach(function (row) {
       var n = notes.find(function (x) { return x.id === row.dataset.id; });
       row.querySelector(".fn-reveal").addEventListener("click", function () {
-        if (window.GameSync) GameSync.send({ type: "coop-note", note: { id: n.id, title: n.title, body: n.body, tone: n.tone } });
+        if (window.GameSync) GameSync.send({ type: "coop-note", note: { id: n.id, title: n.title, body: n.body, tone: n.tone, effect: n.effect || null, image: n.image || null } });
         row.classList.add("revealed");
         this.textContent = "SENT";
         log("REVEALED: " + n.title, "ok");
