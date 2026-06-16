@@ -1,9 +1,8 @@
 /* ============================================
    CARC-7A — T4-84 Field Notes (co-op)
-   The library of letters/notes the GM can reveal to the crew as they
-   explore the derelict survey cruiser T4-84. Mostly dread, with a little
-   dark humor for punctuation. Loaded by both the GM console (to reveal)
-   and is sent to the terminal verbatim over the sync layer.
+   Letters/notes the GM can reveal to the crew as they explore the derelict
+   survey cruiser T4-84. Mostly dread, with goofy humor for punctuation.
+   Written to be easy to follow for younger players.
      tone: "casual" | "dread" | "cryptic"
    ============================================ */
 
@@ -11,70 +10,70 @@
   "use strict";
 
   window.DUO_NOTES = [
-    // --- casual / human (early, makes the dread land harder) ---
+    // --- casual / goofy (early; makes the scary stuff land harder) ---
     {
-      id: "note-ration", tone: "casual", title: "Galley Door — Taped Note",
-      body: "Rollo. If you ate my saved ration again I will space you. This is not a bit.\n\n— Vess"
+      id: "note-ration", tone: "casual", title: "Note Taped to the Snack Locker",
+      body: "ROLLO. If you ate my space-cookies AGAIN, I am going to lose it.\nThose were MINE. I labeled the box. I drew a little angry face on it and everything.\n\n— Vess"
     },
     {
-      id: "note-roster", tone: "casual", title: "Duty Roster (Annotated)",
-      body: "CAKE DUTY: Mara.\nNAV: Dolan.\nVENTS: Tuck.\n\n(scrawled) Do NOT let Tuck near the frosting again. Last time was a war crime."
+      id: "note-roster", tone: "casual", title: "Chore List (with Complaints)",
+      body: "CAKE DUTY: Mara\nFLYING THE SHIP: Dolan\nCLEANING THE VENTS: Tuck\n\n(scribbled at the bottom)\nDo NOT let Tuck decorate the cake again. He used KETCHUP. On a CAKE."
     },
     {
       id: "note-card", tone: "casual", title: "Birthday Card",
-      body: "Thirty-eight runs out and you STILL can't dock clean.\nHappy birthday, old man.\n\n— the whole sorry crew"
+      body: "38 missions and you STILL park the ship like a maniac.\nHappy birthday, Captain Crash.\n\n— from your favorite (and only) crew"
     },
     {
-      id: "note-memo", tone: "casual", title: "Ship-Wide Memo",
-      body: "The thing in the portside vents is NOT a sanctioned morale initiative.\nStop feeding it.\nStop naming it.\n\n— Capt. Aliz"
-    },
-
-    // --- dread (the bulk) ---
-    {
-      id: "note-vents", tone: "dread", title: "Maintenance Log — Tuck",
-      body: "Knocking in the portside vents. Third night running.\nIt stops the exact second you stop to listen.\nPipes don't do that. Pipes don't wait."
-    },
-    {
-      id: "note-headcount", tone: "dread", title: "Watch Log — 0200",
-      body: "Did a head count at change of watch. Got thirteen.\nDid it again. Thirteen.\nThere are twelve of us."
-    },
-    {
-      id: "note-comms", tone: "dread", title: "Comms Discipline Order",
-      body: "Effective now: no names on open comms.\nNo exceptions.\n\nIt learned Mara's voice first. It uses it when it wants the doors opened."
-    },
-    {
-      id: "note-party", tone: "dread", title: "Recovered Page — The Party",
-      body: "We threw Dolan his birthday in the main hold. Halfway through the cake the lights went.\nWhen they came back his chair was empty. Tucked in. Neat.\nWe kept singing. We didn't know what else to do.\nWe didn't do another head count. We were afraid of the number."
-    },
-    {
-      id: "note-arranged", tone: "dread", title: "Quartermaster's Note",
-      body: "Their kit keeps turning up stacked. Boots paired. Tags squared off. Rifles laid parallel.\nNobody's tidying. It tidies.\nIt takes the person and leaves the things exactly so."
-    },
-    {
-      id: "note-mimic", tone: "dread", title: "Watch Note — Pinned by a Knife",
-      body: "It isn't only in the vents.\nSometimes it's the chair nobody pulled out. The crate you walked past twice. The locker that was open, then wasn't.\nWatch the things that shouldn't have teeth. Shoot them and they let go — but they don't die easy, and the noise brings more.\nDon't stand and fight. Make it flinch and run."
-    },
-    {
-      id: "note-rule", tone: "cryptic", title: "Scratched Into a Mess Table",
-      body: "RULE:\nIF YOU DON'T REMEMBER SETTING IT DOWN,\nDON'T PICK IT UP."
-    },
-    {
-      id: "note-lastentry", tone: "dread", title: "Last Legible Entry",
-      body: "If you came out here looking for us — don't.\nTake the flight records. Tell the Authority we navigated wrong.\nLet it stay closed. Let us stay a clerical error."
+      id: "note-memo", tone: "casual", title: "Note on the Fridge",
+      body: "REMINDER FOR EVERYONE:\nThe weird thing in the vents is NOT a pet.\nStop feeding it snacks. Stop giving it a name.\n\n(Greg. This means you, Greg.)\n— Captain Aliz"
     },
 
-    // --- cryptic (drop sparingly, late) ---
+    // --- dread (the bulk; simple words, big creepy ideas) ---
     {
-      id: "note-count", tone: "cryptic", title: "Scrawled on the Bulkhead",
+      id: "note-vents", tone: "dread", title: "Tuck's Vent Log",
+      body: "Something keeps knocking inside the vents. Three nights in a row now.\nHere's the weird part: it only knocks when nobody's listening.\nThe second you stop and listen... it stops too.\nPipes don't do that. Pipes don't WAIT."
+    },
+    {
+      id: "note-headcount", tone: "dread", title: "Night Watch — Head Count",
+      body: "We counted everybody tonight. We got 13.\nWe counted again. Still 13.\nBut there are only 12 of us.\n\nSo who is the extra one?"
+    },
+    {
+      id: "note-comms", tone: "dread", title: "New Radio Rule",
+      body: "New rule, everyone follow it: do NOT say anyone's name on the radio.\nThe thing on this ship can copy our voices. It already copied Mara's.\nIt uses her voice to get people to open doors.\nIf a voice asks you to open a door — don't."
+    },
+    {
+      id: "note-party", tone: "dread", title: "What Happened at the Party",
+      body: "It was Dolan's birthday. We were all eating cake when the lights went out.\nWhen they came back on, his chair was empty. And pushed in. All neat and tidy.\nWe didn't do a head count after that.\nWe were scared of what the number would be."
+    },
+    {
+      id: "note-arranged", tone: "dread", title: "Why Is Everything So Tidy?",
+      body: "People's stuff keeps showing up in neat little piles. Boots lined up. Bags zipped. Everything in a perfect row.\nNobody is cleaning up. But SOMETHING is.\nIt takes the person... and leaves their things stacked up nice and neat.\nThat's the part that scares me."
+    },
+    {
+      id: "note-mimic", tone: "dread", title: "Watch Note — Stuck on With a Knife",
+      body: "It's not just in the vents. Sometimes it pretends to BE things.\nA chair nobody pulled out. A box you walked past. A locker that was open, then closed.\nWatch for things that shouldn't have teeth.\nIf you shoot it, it lets go — but it doesn't die easy, and the noise brings more.\nDon't try to win the fight. Scare it off and RUN."
+    },
+    {
+      id: "note-lastentry", tone: "dread", title: "The Last Note We Can Read",
+      body: "If you came all the way out here looking for us — go home.\nTake the records. Tell them we got lost. Then don't come back.\nSome doors are better left shut."
+    },
+
+    // --- cryptic (drop a few, late; short and eerie) ---
+    {
+      id: "note-count", tone: "cryptic", title: "Written on the Wall",
       body: "DON'T COUNT THEM.\nIT LIKES BEING COUNTED."
     },
     {
-      id: "note-allpresent", tone: "cryptic", title: "Page of Tally Marks",
-      body: "(rows and rows of tally marks, then, in different ink:)\n\nALL PRESENT.\nALL PRESENT.\nALL PRESENT."
+      id: "note-allpresent", tone: "cryptic", title: "A Page Full of Tally Marks",
+      body: "(line after line of little tally marks... then, in different ink:)\n\nEVERYONE IS HERE.\nEVERYONE IS HERE.\nEVERYONE IS HERE."
     },
     {
-      id: "note-answers", tone: "cryptic", title: "Folded in a Helmet",
-      body: "It answers now.\nCall a name down the corridor and something answers — in that voice, from the dark.\nDo not call names. Do not go to the voice.\nThe voice is the bait, not the thing."
+      id: "note-rule", tone: "cryptic", title: "Scratched Into a Table",
+      body: "RULE:\nIF YOU DON'T REMEMBER PUTTING IT DOWN,\nDON'T PICK IT UP."
+    },
+    {
+      id: "note-answers", tone: "cryptic", title: "Folded Up Inside a Helmet",
+      body: "It can talk now.\nIf you call a name down the hallway... something calls back. In that person's voice. From the dark.\nDon't go toward the voice.\nThe voice is the trap, not the thing."
     }
   ];
 })();

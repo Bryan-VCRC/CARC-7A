@@ -1313,6 +1313,12 @@
     ];
     renderCoopValues();
     GameSync.send({ type: "coop-reset" });
+    // Let the GM re-reveal field notes after a reset
+    document.querySelectorAll("#field-notes .fn-row").forEach(function (row) {
+      row.classList.remove("revealed");
+      var btn = row.querySelector(".fn-reveal");
+      if (btn) btn.textContent = "REVEAL";
+    });
     log("CO-OP CREW RESET", "warn");
   });
 

@@ -1015,7 +1015,12 @@
     if (msg.type === "coop-reset") {
       STATE.players = [makePlayer(), makePlayer()];
       STATE.view = ["vitals", "vitals"];
+      STATE.notes = []; // recovered field notes clear back to the starter journal
       SFX.bootDone();
+      // return the journal to its index and re-render with notes removed
+      document.getElementById("arch-journal-detail").classList.add("hidden");
+      document.getElementById("arch-journal-list").style.display = "";
+      renderArchJournalList();
       renderAll();
       save();
       GameSync.send(snapshot());
