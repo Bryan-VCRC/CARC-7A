@@ -596,3 +596,12 @@
 .record-content .doc-body { font-size: 18px; line-height: 1.8; margin-top: 20px; }
 .record-content .journal-body { white-space: pre-wrap; }
 .record-content .arch-media { max-height: 62vh; margin: 20px 0; }
+
+/* ---- Fear mode bleeds over the journal/record modals too ---- */
+.fear-static { z-index: 10060; }
+body.fear-active::after { z-index: 10058; }
+body.fear-active .record-box,
+body.fear-active .identity-box {
+  animation: fear-shake 0.15s linear infinite;
+  filter: saturate(0.4) contrast(1.25) brightness(0.8);
+}

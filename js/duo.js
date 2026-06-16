@@ -1425,6 +1425,7 @@
     steps.push({ delay: 60, fear: true, n: 1 });                     // fear takes hold
     for (i = 0; i < 40; i++) steps.push({ delay: 26, n: 3 });        // faster
     for (i = 0; i < 26; i++) steps.push({ delay: 12, n: 9 });        // endless
+    steps.push({ delay: 1300, n: 4 });                               // hold — let the dread sit
     steps.push({ reboot: true });
 
     var idx = 0;
