@@ -1,8 +1,9 @@
 /* ============================================
    CARC-7A — T4-84 Field Notes (co-op)
    Letters/notes the GM can reveal to the crew as they explore the derelict
-   survey cruiser T4-84. Mostly dread, with goofy humor for punctuation.
-   Written to be easy to follow for younger players.
+   survey cruiser T4-84. Casual notes are goofy young-teen humor; the scary
+   ones are spare and ambient (Silent Hill style) — the dread lives in the
+   gaps, not in explanation. Kept simple enough for younger players.
      tone: "casual" | "dread" | "cryptic"
    ============================================ */
 
@@ -28,52 +29,52 @@
       body: "OKAY. Who keeps feeding the thing in the vents.\nIt is NOT a pet. It is NOT cute. It does NOT need a name.\nGREG. We all know it's you, Greg. I can see you reading this. STOP.\n\n— Capt. Aliz"
     },
 
-    // --- dread (the bulk; simple words, big creepy ideas) ---
+    // --- dread (spare, ambient; the horror is in what isn't said) ---
     {
-      id: "note-vents", tone: "dread", title: "Tuck's Vent Log",
-      body: "Something keeps knocking inside the vents. Three nights in a row now.\nHere's the weird part: it only knocks when nobody's listening.\nThe second you stop and listen... it stops too.\nPipes don't do that. Pipes don't WAIT."
+      id: "note-vents", tone: "dread", title: "Vent Log",
+      body: "The knocking in the walls again.\nIt only happens when no one is listening.\nTonight I held my breath to hear it better.\n\nIt held its breath too."
     },
     {
-      id: "note-headcount", tone: "dread", title: "Night Watch — Head Count",
-      body: "We counted everybody tonight. We got 13.\nWe counted again. Still 13.\nBut there are only 12 of us.\n\nSo who is the extra one?"
+      id: "note-headcount", tone: "dread", title: "Night Watch",
+      body: "We counted. Twelve.\nWe counted again. Thirteen.\nNobody wanted to count a third time."
     },
     {
-      id: "note-comms", tone: "dread", title: "New Radio Rule",
-      body: "New rule, everyone follow it: do NOT say anyone's name on the radio.\nThe thing on this ship can copy our voices. It already copied Mara's.\nIt uses her voice to get people to open doors.\nIf a voice asks you to open a door — don't."
+      id: "note-comms", tone: "dread", title: "Radio Note",
+      body: "It has Mara's voice now.\nMara has been gone since Tuesday.\nThe radio still says goodnight in her voice.\n\nWe stopped saying it back."
     },
     {
-      id: "note-party", tone: "dread", title: "What Happened at the Party",
-      body: "It was Dolan's birthday. We were all eating cake when the lights went out.\nWhen they came back on, his chair was empty. And pushed in. All neat and tidy.\nWe didn't do a head count after that.\nWe were scared of what the number would be."
+      id: "note-party", tone: "dread", title: "The Party",
+      body: "The lights went out during the cake.\nWhen they came back, Dolan's chair was empty.\nSomeone had pushed it in.\n\nWe finished the song. I don't know why we finished the song."
     },
     {
-      id: "note-arranged", tone: "dread", title: "Why Is Everything So Tidy?",
-      body: "People's stuff keeps showing up in neat little piles. Boots lined up. Bags zipped. Everything in a perfect row.\nNobody is cleaning up. But SOMETHING is.\nIt takes the person... and leaves their things stacked up nice and neat.\nThat's the part that scares me."
+      id: "note-arranged", tone: "dread", title: "By the Door",
+      body: "Found Pavel's boots by the airlock.\nLaced. Side by side. Toes to the wall.\nPavel isn't here.\n\nNothing on this ship is messy anymore."
     },
     {
-      id: "note-mimic", tone: "dread", title: "Watch Note — Stuck on With a Knife",
-      body: "It's not just in the vents. Sometimes it pretends to BE things.\nA chair nobody pulled out. A box you walked past. A locker that was open, then closed.\nWatch for things that shouldn't have teeth.\nIf you shoot it, it lets go — but it doesn't die easy, and the noise brings more.\nDon't try to win the fight. Scare it off and RUN."
+      id: "note-mimic", tone: "dread", title: "Watch Note",
+      body: "It isn't always in the vents.\nSometimes it's the chair. The locker. The crate you walked past twice.\nIf it moves, shoot it and go. Don't stay to watch.\n\nThe ones who stayed to watch didn't leave notes."
     },
     {
-      id: "note-lastentry", tone: "dread", title: "The Last Note We Can Read",
-      body: "If you came all the way out here looking for us — go home.\nTake the records. Tell them we got lost. Then don't come back.\nSome doors are better left shut."
+      id: "note-lastentry", tone: "dread", title: "Last Entry",
+      body: "If you're reading this, you came looking.\nI'm sorry.\nTake what you need and go.\n\nDon't say my name on the way out."
     },
 
-    // --- cryptic (drop a few, late; short and eerie) ---
+    // --- cryptic (short, eerie; drop a few, late) ---
     {
-      id: "note-count", tone: "cryptic", title: "Written on the Wall",
+      id: "note-count", tone: "cryptic", title: "On the Wall",
       body: "DON'T COUNT THEM.\nIT LIKES BEING COUNTED."
     },
     {
-      id: "note-allpresent", tone: "cryptic", title: "A Page Full of Tally Marks",
-      body: "(line after line of little tally marks... then, in different ink:)\n\nEVERYONE IS HERE.\nEVERYONE IS HERE.\nEVERYONE IS HERE."
+      id: "note-allpresent", tone: "cryptic", title: "A Page of Tally Marks",
+      body: "(hundreds of little marks, then, in different ink:)\n\nWE ARE ALL HERE.\nWE ARE ALL HERE.\nWE ARE ALL FINE."
     },
     {
       id: "note-rule", tone: "cryptic", title: "Scratched Into a Table",
-      body: "RULE:\nIF YOU DON'T REMEMBER PUTTING IT DOWN,\nDON'T PICK IT UP."
+      body: "IF YOU DON'T REMEMBER PUTTING IT DOWN,\nDON'T PICK IT UP."
     },
     {
-      id: "note-answers", tone: "cryptic", title: "Folded Up Inside a Helmet",
-      body: "It can talk now.\nIf you call a name down the hallway... something calls back. In that person's voice. From the dark.\nDon't go toward the voice.\nThe voice is the trap, not the thing."
+      id: "note-answers", tone: "cryptic", title: "Folded Inside a Helmet",
+      body: "Call a name down the hall and something answers.\nIt uses their voice.\nIt is not them.\n\nDon't go to the voice."
     }
   ];
 })();
