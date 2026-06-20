@@ -12,60 +12,6 @@
   // --- Vital defaults ---
   const VITALS = { hp: 6, hpMax: 6, stress: 0, stressMax: 6 };
 
-  // --- Loadout item templates (chosen during crew setup) ---
-  const ITEMS = {
-    revolver: {
-      type: "weapon", name: "Revolver", icon: "icons/items/revolver.svg", quantity: 1,
-      description: "Six rounds, no frills. One spare speedloader. Loud enough to hear through a bulkhead.",
-      ammo: { current: 6, magCapacity: 6, spareMags: 1, magLabel: "Cylinder", spareLabel: "Speedloaders" },
-      fireModes: ["semi"],
-      stats: { "Damage": "1d10", "Range": "Medium", "Condition": "Worn" },
-    },
-    chainsword: {
-      type: "weapon", name: "Chainsword", icon: "icons/items/knife.svg", quantity: 1,
-      description: "Revs hot, bites deep. Loud — and everything on this ship can hear it.",
-      sfx: "chainsword", sfxLabel: "REV THE CHAINSWORD",
-      stats: { "Damage": "2d10", "Range": "Adjacent", "Condition": "Hungry" },
-    },
-    light: {
-      type: "armor", name: "Light Military Armor", icon: "icons/items/armor.svg", quantity: 1,
-      description: "Ceramic plating over a flex underlayer. Won't stop everything. Stops enough.",
-      stats: { "Armor Points": "2 AP", "Speed Penalty": "-1 Speed", "Condition": "Scuffed" },
-    },
-    leather: {
-      type: "armor", name: "Leather Jacket", icon: "icons/items/armor.svg", quantity: 1,
-      description: "Worn leather, a few old patches. Stops a little. Mostly attitude.",
-      stats: { "Armor Points": "1 AP", "Speed Penalty": "None", "Condition": "Broken in" },
-    },
-    flashlight: {
-      type: "tool", name: "Flashlight", icon: "icons/items/flashlight.svg", quantity: 1,
-      description: "High-beam, long battery. The dark is everywhere out here.",
-      consumable: { current: 12, max: 12, unit: "hours", perUse: 1, verb: "DRAIN", useLabel: "USE 1 HOUR", depletedMsg: "BATTERY DEAD" },
-      stats: { "Beam": "High intensity", "Condition": "Functional" },
-    },
-    rope: {
-      type: "tool", name: "Nylon Rope (20 ft)", icon: "icons/items/paracord.svg", quantity: 1,
-      description: "Twenty feet of nylon line. You'll find a use for it.",
-      stats: { "Length": "20 feet", "Rating": "Strong", "Condition": "Good" },
-    },
-    firstaid: {
-      type: "medical", name: "First Aid Kit", icon: "icons/items/firstaid.svg", quantity: 1,
-      description: "Bandages, sealant foam, a basic stimshot. Buys time.",
-      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL d5", depletedMsg: "KIT EMPTY" },
-      stats: { "Heals": "Roll d5 — GM applies", "Contents": "Bandages, foam sealant, stimshot" },
-    },
-  };
-
-  // Build the inventory from a player's loadout choices + the fixed kit.
-  function buildLoadout(lo) {
-    lo = lo || {};
-    var keys = [
-      lo.weapon === "chainsword" ? "chainsword" : "revolver",
-      lo.armor === "leather" ? "leather" : "light",
-      "flashlight", "rope", "firstaid",
-    ];
-    return keys.map(function (k) { var it = clone(ITEMS[k]); it.id = genId(); return it; });
-  }
 
   const ICON_FOR_TYPE = {
     weapon: "icons/items/revolver.svg",
@@ -95,7 +41,7 @@
       stats: { strength: null, speed: null, intellect: null, combat: null },
       saves: { sanity: null, fear: null, body: null },
       hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax,
-      inventory: buildLoadout(loadout),
+      inventory: window.buildLoadout(loadout),
     };
   }
 
@@ -173,24 +119,14 @@
     return icon || "";
   }
 
-  // Inventory-style item photos (added over time). Keyed by item name; falls
-  // back to the line-art .svg icon when there's no photo yet. To add one: drop
-  // the file in icons/items_pics/ and add a "name": "path" line here.
-  const ITEM_PICS = {
-    "revolver": "icons/items_pics/Revolver.png",
-    "chainsword": "icons/items_pics/Chainsword.png",
-    "pulse carbine": "icons/items_pics/Carbine_Rifle.png",
-    "light military armor": "icons/items_pics/LightMilitary.png",
-    "leather jacket": "icons/items_pics/LeatherJacket.png",
-  };
   function itemPic(item) {
-    return (item && ITEM_PICS[(item.name || "").toLowerCase()]) || null;
+    return (item && item.photo) ? item.photo : null;
   }
 
-  // Photos for the setup weapon/armor choices (full-size preview).
-  const CHOICE_PIC = {
-    weapon: { chainsword: ITEM_PICS["chainsword"], revolver: ITEM_PICS["revolver"] },
-    armor: { light: ITEM_PICS["light military armor"], leather: ITEM_PICS["leather jacket"] },
+  // Map loadout slot+val to catalog keys for setup choice previews.
+  var CHOICE_CATALOG_KEY = {
+    weapon: { chainsword: "chainsword", revolver: "revolver" },
+    armor: { light: "light_armor", leather: "leather_jacket" },
   };
 
   function escapeHtml(text) {
@@ -771,12 +707,7 @@
   // only consumes it (from the user) and tells the GM which die to roll.
   //   die: which die to roll · self/ally: who it can target ·
   //   allyOnlyWhenDown: ally target must be passed out (revive only)
-  var SUPPORT = {
-    "First Aid Kit": { die: "d5", self: true, ally: true },                          // heals most
-    "Combat Stim":   { die: "d3", self: true, ally: true },                          // anytime, lighter
-    "Defibrillator": { die: "d3", self: false, ally: true, allyOnlyWhenDown: true }, // revive a downed ally
-  };
-  function supportFor(item) { return (item && SUPPORT[item.name]) || null; }
+  function supportFor(item) { return (item && item.support) || null; }
 
   function allyUsable(cfg, other, uses) {
     if (uses <= 0) return false;
@@ -1750,7 +1681,7 @@
     [0, 1].forEach(function (idx) {
       // Authoritative: rebuild the starting inventory from the loadout so a
       // stale/old saved inventory can't linger into a fresh setup.
-      STATE.players[idx].inventory = buildLoadout(STATE.players[idx].loadout);
+      STATE.players[idx].inventory = window.buildLoadout(STATE.players[idx].loadout);
       renderInventory(idx);
       wrap.querySelector('.setup-identity[data-setup="' + idx + '"]').addEventListener("click", function () { openIdentity(idx); });
       wrap.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
@@ -1772,7 +1703,7 @@
 
   function setLoadout(idx, slot, val) {
     STATE.players[idx].loadout[slot] = val;
-    STATE.players[idx].inventory = buildLoadout(STATE.players[idx].loadout);
+    STATE.players[idx].inventory = window.buildLoadout(STATE.players[idx].loadout);
     renderInventory(idx);
     renderSetupChoices(idx);
     SFX.select();
@@ -1787,7 +1718,8 @@
     ["weapon", "armor"].forEach(function (slot) {
       var img = document.getElementById("choicepic-" + slot + "-" + idx);
       if (!img) return;
-      var src = (CHOICE_PIC[slot] || {})[lo[slot]];
+      var catalogKey = (CHOICE_CATALOG_KEY[slot] || {})[lo[slot]];
+      var src = catalogKey && window.ITEMS && window.ITEMS[catalogKey] ? window.ITEMS[catalogKey].photo : null;
       if (src) { img.src = src; img.hidden = false; } else { img.hidden = true; }
     });
   }

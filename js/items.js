@@ -23,6 +23,12 @@
 (function () {
   "use strict";
 
+  // --- Id generator (shared across catalog + loadout builder) ---
+  var _idCounter = 0;
+  function genId() {
+    return "it-" + (++_idCounter).toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
   window.ITEMS = {
 
     revolver: {
@@ -184,6 +190,23 @@
       stats: { "Length": "50 feet", "Rating": "550 lb tensile", "Condition": "New" },
     },
 
+  };
+
+  // --- Loadout builder (unit-testable, shared with duo.js) ---
+  // loadout = { weapon: "chainsword"|"revolver", armor: "light"|"leather" }
+  // Returns an array of 5 deep-cloned catalog items, each with a unique id.
+  window.buildLoadout = function (loadout) {
+    loadout = loadout || {};
+    var keys = [
+      loadout.weapon === "chainsword" ? "chainsword" : "revolver",
+      loadout.armor === "leather" ? "leather_jacket" : "light_armor",
+      "flashlight", "rope", "first_aid",
+    ];
+    return keys.map(function (k) {
+      var item = JSON.parse(JSON.stringify(window.ITEMS[k]));
+      item.id = genId();
+      return item;
+    });
   };
 
 }());
