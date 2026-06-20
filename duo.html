@@ -36,6 +36,36 @@
     <div class="reboot-sub" style="margin-top: 16px;">DO NOT POWER OFF</div>
   </div>
 
+  <!-- Intro: story briefing, then crew setup (shown after boot) -->
+  <div id="intro" class="intro-screen hidden">
+    <section id="intro-story" class="intro-panel">
+      <div class="intro-imgwrap"><img id="intro-img" class="intro-img" src="data/media/duos/OutsideShip.png" alt="" draggable="false"></div>
+      <pre id="intro-text" class="intro-text"></pre>
+      <button id="intro-continue" class="intro-btn hidden">CONTINUE &#9656;</button>
+    </section>
+    <section id="intro-setup" class="intro-panel hidden">
+      <div class="intro-heading">IDENTIFY CREW</div>
+      <div class="intro-sub">Enter each name and choose a portrait.</div>
+      <div class="setup-cards">
+        <button class="setup-card" data-setup="0">
+          <div class="setup-portrait" data-player="0">
+            <img id="setup-img-0" class="setup-img" alt="" draggable="false" hidden>
+            <span id="setup-ph-0" class="setup-ph">TAP<br>TO SET</span>
+          </div>
+          <div class="setup-name" id="setup-name-0">PLAYER 1</div>
+        </button>
+        <button class="setup-card" data-setup="1">
+          <div class="setup-portrait" data-player="1">
+            <img id="setup-img-1" class="setup-img" alt="" draggable="false" hidden>
+            <span id="setup-ph-1" class="setup-ph">TAP<br>TO SET</span>
+          </div>
+          <div class="setup-name" id="setup-name-1">PLAYER 2</div>
+        </button>
+      </div>
+      <button id="setup-begin" class="intro-btn">BEGIN &#9656;</button>
+    </section>
+  </div>
+
   <!-- Main app shell -->
   <div id="app" class="app hidden">
     <!-- Top status bar -->

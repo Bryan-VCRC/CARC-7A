@@ -170,9 +170,9 @@
         SFX.bootDone();
         setTimeout(function () {
           bootScreen.classList.add("done");
-          app.classList.remove("hidden");
           setTimeout(function () { bootScreen.remove(); }, 800);
-          initApp();
+          initApp();    // builds the game (kept hidden)
+          startIntro(); // story briefing -> crew setup -> beginGame()
         }, 450);
         return;
       }
@@ -441,6 +441,15 @@
     if (img && ph) {
       if (p.portrait) { img.src = p.portrait; img.hidden = false; ph.hidden = true; }
       else { img.hidden = true; img.removeAttribute("src"); ph.hidden = false; }
+    }
+    // Mirror onto the intro setup card, if present.
+    var sName = document.getElementById("setup-name-" + idx);
+    if (sName) sName.textContent = displayName(idx);
+    var sImg = document.getElementById("setup-img-" + idx);
+    var sPh = document.getElementById("setup-ph-" + idx);
+    if (sImg && sPh) {
+      if (p.portrait) { sImg.src = p.portrait; sImg.hidden = false; sPh.hidden = true; }
+      else { sImg.hidden = true; sImg.removeAttribute("src"); sPh.hidden = false; }
     }
   }
 
@@ -1525,13 +1534,73 @@
     load();
     buildColumns();
     startClock();
-    initEcgMonitors();
     initToggles();
     initIdentity();
     initArchive();
     loadPortraits();
     renderAll();
     initSync();
+    // ECG monitors need layout, so they start in beginGame() once #app is shown.
+  }
+
+  // --- Intro: story briefing -> crew setup -> game ---
+  var STORY_LINES = [
+    "INCOMING CONTRACT // COLONIAL RESOURCE AUTHORITY",
+    "",
+    "Survey cruiser T4-84 went dark three months ago.",
+    "No distress call. No escape pods. No beacon.",
+    "",
+    "You are bounty hunters. Underfunded. Expendable.",
+    "Recover whatever explains it. Survivors pay more.",
+    "",
+    "The cruiser is dead ahead — running, warm,",
+    "and still broadcasting.",
+    "",
+    "\"All clear. Come aboard. Party's still going.\"",
+  ];
+
+  function startIntro() {
+    var intro = document.getElementById("intro");
+    var textEl = document.getElementById("intro-text");
+    var contBtn = document.getElementById("intro-continue");
+    intro.classList.remove("hidden");
+    textEl.textContent = "";
+    contBtn.classList.add("hidden");
+
+    var i = 0;
+    function typeStory() {
+      if (i >= STORY_LINES.length) {
+        contBtn.classList.remove("hidden");
+        return;
+      }
+      var line = STORY_LINES[i];
+      textEl.textContent += line + "\n";
+      i++;
+      if (line !== "") SFX.tick();
+      setTimeout(typeStory, line === "" ? 160 : 220 + Math.random() * 120);
+    }
+    typeStory();
+
+    contBtn.addEventListener("click", function () {
+      SFX.select();
+      document.getElementById("intro-story").classList.add("hidden");
+      document.getElementById("intro-setup").classList.remove("hidden");
+      renderIdentity(0);
+      renderIdentity(1);
+    }, { once: true });
+
+    document.querySelectorAll(".setup-card").forEach(function (card) {
+      card.addEventListener("click", function () { openIdentity(Number(card.dataset.setup)); });
+    });
+    document.getElementById("setup-begin").addEventListener("click", beginGame);
+  }
+
+  function beginGame() {
+    SFX.bootDone();
+    document.getElementById("intro").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    initEcgMonitors();   // now visible -> canvases have a size
+    renderAll();
   }
 
   if (document.readyState === "loading") {
