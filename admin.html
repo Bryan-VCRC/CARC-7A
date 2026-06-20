@@ -220,6 +220,35 @@
     }
     .lights-on-btn:active { background: rgba(0, 255, 157, 0.2); box-shadow: 0 0 15px rgba(0, 255, 157, 0.15); }
 
+    /* Ambiance rows */
+    .amb-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 2px;
+      margin-bottom: 6px;
+    }
+    .amb-play {
+      flex-shrink: 0;
+      width: 78px;
+      padding: 9px 0;
+      background: rgba(0, 255, 157, 0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-dim);
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .amb-play.active { color: var(--primary); border-color: var(--primary-dim); background: rgba(0, 255, 157, 0.12); }
+    .amb-name { flex: 1; font-size: 12px; letter-spacing: 1px; color: var(--text-bright); min-width: 0; }
+    .amb-vol { flex-shrink: 0; width: 110px; accent-color: var(--primary); }
+
     .panic-btn .btn-icon {
       font-size: 18px;
       display: block;
@@ -814,6 +843,11 @@
       <span class="btn-label"><span class="status-dot"></span>FEAR MODE</span>
       <span class="btn-desc">Silent Hill-style screen distortion &amp; audio drone</span>
     </button>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Ambiance &mdash; Background Loops</div>
+    <div id="ambiance-list"></div>
   </div>
 
   <div class="section panic-section">
@@ -1436,6 +1470,36 @@
         this.textContent = "SENT";
         log("REVEALED: " + n.title, "ok");
       });
+    });
+  })();
+
+  // --- Ambiance: looping background beds with play/pause + volume ---
+  var AMBIANCE = [
+    { name: "Spaceship Low Roar", url: "data/media/soundeffects/spaceship_lowroar.mp3" },
+  ];
+  (function buildAmbiance() {
+    var wrap = document.getElementById("ambiance-list");
+    wrap.innerHTML = AMBIANCE.map(function (a) {
+      return '<div class="amb-row" data-url="' + a.url + '">' +
+        '<button class="amb-play">&#9654; PLAY</button>' +
+        '<span class="amb-name">' + a.name + '</span>' +
+        '<input type="range" class="amb-vol" min="0" max="100" value="50">' +
+        '</div>';
+    }).join("");
+    wrap.querySelectorAll(".amb-row").forEach(function (row) {
+      var url = row.dataset.url;
+      var playBtn = row.querySelector(".amb-play");
+      var vol = row.querySelector(".amb-vol");
+      var playing = false;
+      function send() { broadcast({ type: "ambiance", url: url, on: playing, volume: parseInt(vol.value, 10) / 100 }); }
+      playBtn.addEventListener("click", function () {
+        playing = !playing;
+        playBtn.classList.toggle("active", playing);
+        playBtn.innerHTML = playing ? "&#10073;&#10073; PAUSE" : "&#9654; PLAY";
+        send();
+        log("AMBIANCE " + (playing ? "ON" : "OFF") + ": " + row.querySelector(".amb-name").textContent, "ok");
+      });
+      vol.addEventListener("input", function () { if (playing) send(); });
     });
   })();
 

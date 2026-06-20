@@ -918,6 +918,11 @@
 
     if (msg.type === "lights-on") { clearAllFx(); return; }
 
+    if (msg.type === "ambiance") {
+      if (SFX.ambiance) SFX.ambiance(msg.url, msg.on !== false, msg.volume);
+      return;
+    }
+
     if (msg.type === "fear" || msg.type === "panic") {
       // GameSync delivers over WS + BroadcastChannel; drop the duplicate so a
       // single press doesn't fire (or toggle) twice.
