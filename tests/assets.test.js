@@ -60,3 +60,31 @@ test("js/audio.js contains no old soundeffects paths", function () {
     "audio.js still references data/media/176238 (old sci-fi error path)"
   );
 });
+
+test("all 5 item photos exist in icons/item-photos/", function () {
+  const PHOTO_KEYS = [
+    "revolver",
+    "chainsword",
+    "pulse_carbine",
+    "light_armor",
+    "leather_jacket",
+  ];
+  for (const key of PHOTO_KEYS) {
+    const fullPath = path.join(__dirname, "..", "icons", "item-photos", key + ".png");
+    assert.ok(
+      fs.existsSync(fullPath),
+      "Missing item photo: " + key + ".png (expected at " + fullPath + ")"
+    );
+  }
+});
+
+test("js/items.js contains no icons/items_pics references", function () {
+  const src = fs.readFileSync(
+    path.join(__dirname, "..", "js", "items.js"),
+    "utf8"
+  );
+  assert.ok(
+    !src.includes("icons/items_pics"),
+    "items.js still references icons/items_pics"
+  );
+});
