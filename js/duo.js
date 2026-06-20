@@ -111,7 +111,7 @@
 
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, allHereDone: STATE.allHereDone, started: STATE.started, players: STATE.players }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 4, view: STATE.view, notes: STATE.notes, allHereDone: STATE.allHereDone, started: STATE.started, players: STATE.players }));
     } catch (e) { /* storage unavailable — fail silently */ }
   }
 
@@ -138,7 +138,9 @@
       });
       if (Array.isArray(data.notes)) STATE.notes = data.notes;
       if (typeof data.allHereDone === "boolean") STATE.allHereDone = data.allHereDone;
-      if (typeof data.started === "boolean") STATE.started = data.started;
+      // Only trust "started" (skip-intro) from the current save format, so
+      // pre-equipment saves re-run setup and rebuild a clean loadout.
+      if (typeof data.started === "boolean" && data.version === 4) STATE.started = data.started;
       // Per-player view (older saves stored a single string)
       if (Array.isArray(data.view)) {
         data.view.slice(0, 2).forEach(function (v, i) {
@@ -1652,6 +1654,10 @@
     var wrap = document.getElementById("setup-cards");
     wrap.innerHTML = setupCardHTML(0) + setupCardHTML(1);
     [0, 1].forEach(function (idx) {
+      // Authoritative: rebuild the starting inventory from the loadout so a
+      // stale/old saved inventory can't linger into a fresh setup.
+      STATE.players[idx].inventory = buildLoadout(STATE.players[idx].loadout);
+      renderInventory(idx);
       wrap.querySelector('.setup-identity[data-setup="' + idx + '"]').addEventListener("click", function () { openIdentity(idx); });
       wrap.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
         btn.addEventListener("click", function () { setLoadout(idx, btn.dataset.slot, btn.dataset.val); });
@@ -1659,6 +1665,7 @@
       renderIdentity(idx);
       renderSetupChoices(idx);
     });
+    save();
   }
 
   function setLoadout(idx, slot, val) {
