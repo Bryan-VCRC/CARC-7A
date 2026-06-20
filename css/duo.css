@@ -635,12 +635,14 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
 
 .intro-panel {
   width: 100%;
-  max-width: 640px;
+  max-width: 960px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 18px;
 }
+/* The story panel reads better narrower than the wide setup panel. */
+#intro-story { max-width: 680px; }
 .intro-panel.hidden { display: none; }
 
 .intro-imgwrap {
@@ -691,20 +693,20 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
 }
 .intro-sub { font-family: var(--font-mono); font-size: 12px; letter-spacing: 1px; color: var(--text-dim); margin-top: -8px; }
 
-.setup-cards { display: flex; gap: 16px; width: 100%; justify-content: center; flex-wrap: wrap; }
+.setup-cards { display: flex; gap: 18px; width: 100%; justify-content: center; flex-wrap: wrap; }
 
 .setup-card {
-  flex: 1 1 220px;
-  max-width: 280px;
+  flex: 1 1 380px;
+  max-width: 460px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
-  padding: 18px;
+  gap: 14px;
+  padding: 20px;
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 4px;
-  cursor: pointer;
+  cursor: default;
   -webkit-tap-highlight-color: transparent;
 }
 .setup-card:active { border-color: var(--primary-dim); }
@@ -859,3 +861,15 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
   border-radius: 4px;
   margin-bottom: 12px;
 }
+
+/* Full-size weapon/armor preview on the setup card */
+.choice-pic {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  background: #000;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-top: 4px;
+}
+.choice-pic[hidden] { display: none; }

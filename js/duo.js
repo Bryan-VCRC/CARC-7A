@@ -186,6 +186,12 @@
     return (item && ITEM_PICS[(item.name || "").toLowerCase()]) || null;
   }
 
+  // Photos for the setup weapon/armor choices (full-size preview).
+  const CHOICE_PIC = {
+    weapon: { chainsword: ITEM_PICS["chainsword"], revolver: ITEM_PICS["revolver"] },
+    armor: { light: ITEM_PICS["light military armor"], leather: ITEM_PICS["leather jacket"] },
+  };
+
   function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text == null ? "" : text;
@@ -553,7 +559,7 @@
     grid.innerHTML = items.map(function (item) {
       return '' +
         '<div class="inv-card type-' + item.type + '" data-id="' + item.id + '">' +
-        '<div class="inv-icon">' + (itemPic(item) ? '<img class="inv-pic" src="' + itemPic(item) + '" alt="" draggable="false">' : renderIcon(item.icon)) + '</div>' +
+        '<div class="inv-icon">' + renderIcon(item.icon) + '</div>' +
         '<div class="inv-name">' + escapeHtml(item.name) + '</div>' +
         (item.quantity > 1 ? '<div class="inv-qty">x' + item.quantity + '</div>' : '') +
         '</div>';
@@ -594,12 +600,11 @@
     let consumableHtml = item.consumable ? buildConsumablePanel(item, idx) : "";
     var pic = itemPic(item);
     var picHtml = pic ? '<img class="item-pic" src="' + pic + '" alt="" draggable="false">' : "";
-    var titleIcon = pic ? "" : renderIcon(item.icon, "detail-icon") + " ";
 
     content.innerHTML = '' +
       picHtml +
       '<div class="doc-header">' +
-      '<div class="doc-title">' + titleIcon + escapeHtml(item.name) + '</div>' +
+      '<div class="doc-title">' + renderIcon(item.icon, "detail-icon") + " " + escapeHtml(item.name) + '</div>' +
       '<div class="doc-meta"><span>TYPE: ' + item.type.toUpperCase() + '</span><span>QTY: ' + item.quantity + '</span></div>' +
       '</div>' +
       '<div class="doc-body">' + escapeHtml(item.description) + '</div>' +
@@ -1690,7 +1695,10 @@
     var btns = opts.map(function (o) {
       return '<button class="choice-btn" data-player="' + idx + '" data-slot="' + slot + '" data-val="' + o[0] + '">' + o[1] + '</button>';
     }).join("");
-    return '<div class="setup-choice"><span class="choice-label">' + label + '</span><div class="choice-opts">' + btns + '</div></div>';
+    return '<div class="setup-choice"><span class="choice-label">' + label + '</span>' +
+      '<div class="choice-opts">' + btns + '</div>' +
+      '<img class="choice-pic" id="choicepic-' + slot + '-' + idx + '" alt="" draggable="false" hidden>' +
+      '</div>';
   }
 
   function statInput(idx, group, key, label) {
@@ -1763,6 +1771,12 @@
     var lo = STATE.players[idx].loadout || {};
     document.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
       btn.classList.toggle("selected", lo[btn.dataset.slot] === btn.dataset.val);
+    });
+    ["weapon", "armor"].forEach(function (slot) {
+      var img = document.getElementById("choicepic-" + slot + "-" + idx);
+      if (!img) return;
+      var src = (CHOICE_PIC[slot] || {})[lo[slot]];
+      if (src) { img.src = src; img.hidden = false; } else { img.hidden = true; }
     });
   }
 
