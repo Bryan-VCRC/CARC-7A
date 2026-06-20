@@ -172,6 +172,20 @@
     return icon || "";
   }
 
+  // Inventory-style item photos (added over time). Keyed by item name; falls
+  // back to the line-art .svg icon when there's no photo yet. To add one: drop
+  // the file in icons/items_pics/ and add a "name": "path" line here.
+  const ITEM_PICS = {
+    "revolver": "icons/items_pics/Revolver.png",
+    "chainsword": "icons/items_pics/Chainsword.png",
+    "pulse carbine": "icons/items_pics/Carbine_Rifle.png",
+    "light military armor": "icons/items_pics/LightMilitary.png",
+    "leather jacket": "icons/items_pics/LeatherJacket.png",
+  };
+  function itemPic(item) {
+    return (item && ITEM_PICS[(item.name || "").toLowerCase()]) || null;
+  }
+
   function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text == null ? "" : text;
@@ -539,7 +553,7 @@
     grid.innerHTML = items.map(function (item) {
       return '' +
         '<div class="inv-card type-' + item.type + '" data-id="' + item.id + '">' +
-        '<div class="inv-icon">' + renderIcon(item.icon) + '</div>' +
+        '<div class="inv-icon">' + (itemPic(item) ? '<img class="inv-pic" src="' + itemPic(item) + '" alt="" draggable="false">' : renderIcon(item.icon)) + '</div>' +
         '<div class="inv-name">' + escapeHtml(item.name) + '</div>' +
         (item.quantity > 1 ? '<div class="inv-qty">x' + item.quantity + '</div>' : '') +
         '</div>';
@@ -578,10 +592,14 @@
 
     let ammoHtml = item.ammo ? buildAmmoPanel(item) : "";
     let consumableHtml = item.consumable ? buildConsumablePanel(item, idx) : "";
+    var pic = itemPic(item);
+    var picHtml = pic ? '<img class="item-pic" src="' + pic + '" alt="" draggable="false">' : "";
+    var titleIcon = pic ? "" : renderIcon(item.icon, "detail-icon") + " ";
 
     content.innerHTML = '' +
+      picHtml +
       '<div class="doc-header">' +
-      '<div class="doc-title">' + renderIcon(item.icon, "detail-icon") + " " + escapeHtml(item.name) + '</div>' +
+      '<div class="doc-title">' + titleIcon + escapeHtml(item.name) + '</div>' +
       '<div class="doc-meta"><span>TYPE: ' + item.type.toUpperCase() + '</span><span>QTY: ' + item.quantity + '</span></div>' +
       '</div>' +
       '<div class="doc-body">' + escapeHtml(item.description) + '</div>' +

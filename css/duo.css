@@ -841,3 +841,21 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
   user-select: text;
 }
 .stat-field input:focus { outline: none; border-color: var(--primary-dim); }
+
+/* ---- Item photos (icons/items_pics) ---- */
+.inv-pic {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 3px;
+}
+.item-pic {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  background: #000;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
