@@ -56,17 +56,69 @@
     typeLine();
   }
 
+  function launchTo(card, href) {
+    SFX.select();
+    if (navigator.vibrate) navigator.vibrate(12);
+    card.classList.add("launching");
+    setTimeout(function () { window.location.href = href; }, 260);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+
+  function buildAdventureList() {
+    var wrap = document.getElementById("adventure-modes");
+    var stories = window.STORIES || {};
+    var ids = Object.keys(stories);
+    if (!ids.length) {
+      wrap.innerHTML = '<div class="mode-desc" style="padding:20px;">NO ADVENTURES INSTALLED.</div>';
+      return;
+    }
+    wrap.innerHTML = ids.map(function (id) {
+      var s = stories[id] || {};
+      return '<button class="mode-card" data-href="duo.html?story=' + encodeURIComponent(id) + '">' +
+        '<div class="mode-glyph">' +
+          '<svg viewBox="0 0 24 24"><path d="M4 4h13l3 3v13H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>' +
+        '</div>' +
+        '<div class="mode-info">' +
+          '<div class="mode-name">' + escapeHtml(s.title || id) + '</div>' +
+          '<div class="mode-desc">' + escapeHtml(s.blurb || "") + '</div>' +
+        '</div>' +
+        '<div class="mode-go">&#9656;</div>' +
+      '</button>';
+    }).join("");
+    wrap.querySelectorAll(".mode-card").forEach(function (card) {
+      card.addEventListener("click", function () { launchTo(card, card.dataset.href); });
+    });
+  }
+
+  function showAdventure() {
+    SFX.select();
+    buildAdventureList();
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("adventure").classList.remove("hidden");
+  }
+
   function initMenu() {
-    document.querySelectorAll(".mode-card").forEach(function (card) {
+    document.querySelectorAll("#menu .mode-card").forEach(function (card) {
       if (card.classList.contains("disabled")) return;
       card.addEventListener("click", function () {
-        const href = card.dataset.href;
-        if (!href) return;
-        SFX.select();
-        if (navigator.vibrate) navigator.vibrate(12);
-        card.classList.add("launching");
-        setTimeout(function () { window.location.href = href; }, 260);
+        if (card.dataset.href) {
+          launchTo(card, card.dataset.href);
+        } else if (card.dataset.screen === "adventure") {
+          showAdventure();
+        }
       });
+    });
+
+    var back = document.getElementById("adventure-back");
+    if (back) back.addEventListener("click", function () {
+      SFX.select();
+      document.getElementById("adventure").classList.add("hidden");
+      document.getElementById("menu").classList.remove("hidden");
     });
   }
 
