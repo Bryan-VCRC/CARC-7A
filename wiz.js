@@ -42,8 +42,8 @@ function broadcastAddrs() {
   return addrs;
 }
 
-// Restore color when fear ends / after a panic effect settles (warm white).
-const RESTORE = { r: 255, g: 170, b: 90, dimming: 80 };
+// Restore color when fear ends / after a panic effect settles (warm white, full brightness).
+const RESTORE = { r: 255, g: 170, b: 90, dimming: 100 };
 
 // Strobe tuning. interval is the ms between on/off flips — WiZ bulbs realistically
 // bottom out around 70-90ms (faster than that drops UDP frames / looks ragged).
@@ -85,6 +85,25 @@ function clearEffects() {
   activeTimers = [];
 }
 
+// Bulb fade in/out time (ms) via setUserConfig. We zero it for crisp strobes
+// and restore it so fear/blackout/reboot keep their smooth transitions.
+const DEFAULT_FADE = 250;
+let currentFade = null;
+function setFade(ms) {
+  if (currentFade === ms) return;
+  currentFade = ms;
+  for (const ip of bulbs) sendTo(ip, { method: "setUserConfig", params: { fadeIn: ms, fadeOut: ms } });
+}
+
+// Run a rapid burst with fade disabled for crisp on/off, then restore fade.
+function crisp(run, burstMs) {
+  setFade(0);
+  activeTimers.push(setTimeout(run, 130)); // let the zero-fade config land first
+  if (!NO_FADE) {
+    activeTimers.push(setTimeout(function () { setFade(DEFAULT_FADE); }, 130 + burstMs + 400));
+  }
+}
+
 // Hard-ish strobe: flip full-on color <-> off at a fixed interval, then settle.
 // opts: { flashes, interval, color }. WiZ's built-in fade softens the edges a
 // bit — set WIZ_NO_FADE=1 to try disabling it (see start()).
@@ -123,7 +142,7 @@ function handle(msg) {
   if (msg.type === "fear") {
     clearEffects();
     if (msg.active) {
-      setAll({ state: true, r: 120, g: 0, b: 0, dimming: 25 }); // sickly dim red
+      setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }); // full-bright red
     } else {
       setAll({ state: true, ...RESTORE });                      // warm restore
     }
@@ -133,11 +152,11 @@ function handle(msg) {
   if (msg.type === "panic") {
     clearEffects();
     switch (msg.action) {
-      case "glitch": // rapid red strobe, then settle
-        strobe();
+      case "glitch": // rapid red strobe, then settle (fade off for crisp snaps)
+        crisp(strobe, STROBE.flashes * 2 * STROBE.interval);
         break;
-      case "flicker": // inconsistent failing-light flicker
-        flicker();
+      case "flicker": // inconsistent failing-light flicker (fade off for crisp snaps)
+        crisp(flicker, FLICKER.pulses * FLICKER.maxGap);
         break;
       case "blackout": { // cut to black, hard red snap, then settle back to white
         setAll({ state: false });
@@ -146,7 +165,7 @@ function handle(msg) {
         break;
       }
       case "corrupt": // glitchy magenta hold, then settle back to white
-        setAll({ state: true, r: 180, g: 0, b: 80, dimming: 50 });
+        setAll({ state: true, r: 255, g: 0, b: 110, dimming: 100 });
         activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 1200));
         break;
       case "reboot": // power down, slow warm fade back up
@@ -174,8 +193,8 @@ const NO_FADE = /^(1|true|yes)$/i.test(process.env.WIZ_NO_FADE || "");
 
 function applyNoFade() {
   if (!NO_FADE) return;
-  for (const ip of bulbs) sendTo(ip, { method: "setUserConfig", params: { fadeIn: 0, fadeOut: 0 } });
-  console.log("  WiZ:     fade disabled (WIZ_NO_FADE) — crisper strobe");
+  setFade(0);
+  console.log("  WiZ:     fade disabled (WIZ_NO_FADE) — crisper everything");
 }
 
 function start() {
