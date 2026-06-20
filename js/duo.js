@@ -411,6 +411,13 @@
     if (downed) downed.classList.toggle("hidden", p.hp > 0);
 
     updateMonitorLabel(idx);
+    updateHeartbeat();
+  }
+
+  // Quiet heartbeat loop while any crew member is hanging on at 1 HP.
+  function updateHeartbeat() {
+    var critical = STATE.players.some(function (p) { return p.hp === 1; });
+    if (SFX.heartbeat) SFX.heartbeat(critical);
   }
 
   function renderColumnChrome(idx) {
@@ -909,6 +916,8 @@
       return;
     }
 
+    if (msg.type === "lights-on") { clearAllFx(); return; }
+
     if (msg.type === "fear" || msg.type === "panic") {
       // GameSync delivers over WS + BroadcastChannel; drop the duplicate so a
       // single press doesn't fire (or toggle) twice.
@@ -922,8 +931,7 @@
     if (msg.type === "fear") {
       if (msg.active) {
         document.body.classList.add("fear-active");
-        SFX.fearStart();
-        startFearDrone();
+        startFearDrone(); // ambient drone only — no alert blip
       } else {
         document.body.classList.remove("fear-active");
         stopFearDrone();
@@ -932,7 +940,7 @@
     }
 
     if (msg.type === "panic") {
-      handlePanic(msg.action);
+      handlePanic(msg.action, msg.on);
       return;
     }
 
@@ -1047,67 +1055,68 @@
   // --- Atmosphere effects (driven by the GM console) ---
   var fearDrone = null;
 
-  function handlePanic(action) {
-    if (action === "glitch") panicGlitch();
-    else if (action === "blackout") panicBlackout();
-    else if (action === "corrupt") panicCorrupt();
-    else if (action === "reboot") panicReboot();
-    else if (action === "flicker") panicFlicker();
-    else if (action === "static") panicStatic();
-  }
+  var flickerTimer = null;
 
-  // Rapid strobe: blink the screen black at irregular gaps (failing-light feel).
-  function panicFlicker() {
-    var overlay = document.getElementById("blackout-overlay");
-    if (navigator.vibrate) navigator.vibrate([20, 40, 15, 60, 25, 30]);
-    var t = 0, on = false;
-    for (var i = 0; i < 9; i++) {
-      on = !on;
-      (function (show, delay) {
-        setTimeout(function () { overlay.classList.toggle("active", show); }, delay);
-      })(on, t);
-      t += 35 + Math.random() * 130;
+  // Sustained panic. Visual effects (glitch/corrupt/blackout/flicker) are
+  // mutually exclusive; static (audio) and reboot (one-shot) are independent.
+  // No alert/error blips — only radio static makes sound.
+  function handlePanic(action, on) {
+    on = on !== false;
+    if (action === "static") {
+      if (SFX.radioStaticSet) SFX.radioStaticSet(on);
+      if (on && navigator.vibrate) navigator.vibrate(60);
+      return;
     }
-    setTimeout(function () { overlay.classList.remove("active"); }, t + 60);
+    if (action === "reboot") { panicReboot(); return; }
+
+    clearVisualFx();   // one visual effect at a time
+    if (!on) return;   // toggled off — already cleared
+    switch (action) {
+      case "glitch":
+        document.body.classList.add("panic-glitch-hold");
+        if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+        break;
+      case "corrupt":
+        document.body.classList.add("panic-corrupt-hold");
+        break;
+      case "blackout":
+        document.getElementById("blackout-overlay").classList.add("active");
+        break;
+      case "flicker":
+        setFlicker(true);
+        break;
+    }
   }
 
-  // Silent Hill-style radio static — toggles on/off.
-  function panicStatic() {
-    if (SFX.radioStaticToggle) SFX.radioStaticToggle();
-    else if (SFX.radioStatic) SFX.radioStatic();
-    if (navigator.vibrate) navigator.vibrate(60);
-  }
-
-  function panicGlitch() {
-    SFX.fearStart();
-    document.body.classList.add("panic-glitch");
-    if (navigator.vibrate) navigator.vibrate([50, 30, 50, 30, 80, 40, 100]);
-    setTimeout(function () { document.body.classList.remove("panic-glitch"); }, 600);
-  }
-
-  function panicBlackout() {
+  // Continuous failing-light flicker on the terminal (blackout overlay).
+  function setFlicker(on) {
     var overlay = document.getElementById("blackout-overlay");
-    overlay.classList.add("active");
-    SFX.panicHit();
-    if (navigator.vibrate) navigator.vibrate(200);
-    setTimeout(function () { overlay.classList.remove("active"); }, 1500);
-    setTimeout(function () { overlay.classList.add("active"); }, 1700);
-    setTimeout(function () { overlay.classList.remove("active"); }, 1900);
-    setTimeout(function () { overlay.classList.add("active"); }, 2000);
-    setTimeout(function () { overlay.classList.remove("active"); }, 3200);
+    if (on) {
+      if (flickerTimer) return;
+      flickerTimer = setInterval(function () {
+        overlay.classList.toggle("active", Math.random() < 0.5);
+      }, 90);
+    } else {
+      clearInterval(flickerTimer);
+      flickerTimer = null;
+      overlay.classList.remove("active");
+    }
   }
 
-  function panicCorrupt() {
-    SFX.panicHit();
-    document.body.classList.add("panic-corrupt");
-    if (navigator.vibrate) navigator.vibrate([80, 50, 80, 50, 80]);
-    var clock = document.getElementById("clock");
-    var saved = clock.textContent;
-    clock.textContent = "E̵R̶R̸O̷R̵";
-    setTimeout(function () {
-      document.body.classList.remove("panic-corrupt");
-      clock.textContent = saved;
-    }, 1000);
+  // Stop the visual panic effects (they're mutually exclusive).
+  function clearVisualFx() {
+    document.body.classList.remove("panic-glitch-hold", "panic-corrupt-hold", "panic-glitch", "panic-corrupt");
+    setFlicker(false);
+    var overlay = document.getElementById("blackout-overlay");
+    if (overlay) overlay.classList.remove("active");
+  }
+
+  // Master all-clear (the GM's "LIGHTS ON"): stop every terminal effect.
+  function clearAllFx() {
+    clearVisualFx();
+    document.body.classList.remove("fear-active");
+    stopFearDrone();
+    if (SFX.radioStaticSet) SFX.radioStaticSet(false);
   }
 
   function panicReboot() {
@@ -1115,7 +1124,6 @@
     var bar = document.getElementById("reboot-bar");
     overlay.classList.add("active");
     stopFearDrone();
-    SFX.panicHit();
     if (navigator.vibrate) navigator.vibrate(300);
 
     bar.style.width = "0%";

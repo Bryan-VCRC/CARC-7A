@@ -203,6 +203,23 @@
       box-shadow: 0 0 15px rgba(255, 51, 68, 0.2);
     }
 
+    .lights-on-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 14px;
+      background: rgba(0, 255, 157, 0.08);
+      border: 1px solid var(--primary-dim);
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      letter-spacing: 2px;
+      cursor: pointer;
+      border-radius: 2px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .lights-on-btn:active { background: rgba(0, 255, 157, 0.2); box-shadow: 0 0 15px rgba(0, 255, 157, 0.15); }
+
     .panic-btn .btn-icon {
       font-size: 18px;
       display: block;
@@ -233,7 +250,7 @@
 
     .stat-control-label.hp { color: #00ff9d; }
     .stat-control-label.wounds { color: #ff6b35; }
-    .stat-control-label.stress { color: #00d4ff; }
+    .stat-control-label.stress { color: var(--danger); }
 
     .stat-control-actions {
       display: flex;
@@ -827,6 +844,7 @@
         RADIO STATIC
       </button>
     </div>
+    <button id="lights-on" class="lights-on-btn">&#9728; LIGHTS ON &mdash; ALL CLEAR</button>
   </div>
 
   <div class="admin-log">
@@ -888,18 +906,38 @@
     static: "RADIO STATIC"
   };
 
+  // Visual effects are mutually exclusive (one at a time); static is an
+  // independent audio toggle; reboot is momentary.
+  var VISUAL_PANICS = ["glitch", "blackout", "corrupt", "flicker"];
   panicBtns.forEach(function (btn) {
     btn.addEventListener("click", function () {
       var cmd = btn.dataset.cmd;
-      broadcast({ type: "panic", action: cmd });
-      // Radio static is a toggle — reflect on/off; others are momentary.
-      if (cmd === "static") {
-        var on = btn.classList.toggle("active");
-        log("RADIO STATIC: " + (on ? "ON" : "OFF"), on ? "warn" : "ok");
-      } else {
-        log("PANIC: " + panicLabels[cmd], "warn");
+      if (cmd === "reboot") {
+        broadcast({ type: "panic", action: "reboot", on: true });
+        log("PANIC: FORCE REBOOT", "warn");
+        return;
       }
+      var on = !btn.classList.contains("active");
+      if (on && VISUAL_PANICS.indexOf(cmd) !== -1) {
+        // turn off any other active visual effect
+        document.querySelectorAll(".panic-btn.active").forEach(function (b) {
+          if (b !== btn && VISUAL_PANICS.indexOf(b.dataset.cmd) !== -1) b.classList.remove("active");
+        });
+      }
+      btn.classList.toggle("active", on);
+      broadcast({ type: "panic", action: cmd, on: on });
+      log("PANIC: " + panicLabels[cmd] + " — " + (on ? "ON" : "OFF"), on ? "warn" : "ok");
     });
+  });
+
+  // LIGHTS ON / all-clear: full white, and stop every effect everywhere.
+  document.getElementById("lights-on").addEventListener("click", function () {
+    broadcast({ type: "lights-on" });
+    document.querySelectorAll(".panic-btn.active").forEach(function (b) { b.classList.remove("active"); });
+    var fearBtn = document.getElementById("fear-toggle");
+    if (fearBtn) fearBtn.classList.remove("active");
+    fearActive = false;
+    log("LIGHTS ON — all clear", "ok");
   });
 
   // --- Player Stats Controls ---

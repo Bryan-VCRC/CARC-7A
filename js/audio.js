@@ -500,6 +500,44 @@
     if (staticSrc || staticWanted) { staticWanted = false; stopRadioStaticLoop(); return false; }
     staticWanted = true; startRadioStaticLoop(); return true;
   }
+  // Explicit on/off (for sustained GM toggle).
+  function setRadioStatic(on) {
+    if (on) { staticWanted = true; startRadioStaticLoop(); }
+    else { staticWanted = false; stopRadioStaticLoop(); }
+  }
+
+  // --- Low-health heartbeat (loops quietly while a crew member is at 1 HP) ---
+  preloadSample("heartbeat", "data/media/soundeffects/lowhealth_heartbeat.mp3");
+  var heartSrc = null;
+  var heartWanted = false;
+  function startHeartbeatLoop() {
+    if (!ensureContext() || heartSrc) return;
+    var s = samples["heartbeat"];
+    if (!s) return;
+    function play(buffer) {
+      if (heartSrc || !heartWanted) return;
+      var src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      var g = ctx.createGain();
+      g.gain.value = 0.3; // lower than usual so it isn't grating
+      src.connect(g);
+      g.connect(ctx.destination);
+      src.start();
+      heartSrc = { src: src, gain: g };
+    }
+    if (s.decoded) play(s.decoded);
+    else if (s.raw) ctx.decodeAudioData(s.raw.slice(0), function (d) { s.decoded = d; s.raw = null; play(d); });
+  }
+  function stopHeartbeatLoop() {
+    if (!heartSrc) return;
+    try { heartSrc.src.stop(); heartSrc.src.disconnect(); heartSrc.gain.disconnect(); } catch (e) {}
+    heartSrc = null;
+  }
+  function setHeartbeat(on) {
+    if (on) { heartWanted = true; startHeartbeatLoop(); }
+    else { heartWanted = false; stopHeartbeatLoop(); }
+  }
 
   // --- Radio switch: short click/squelch (recovered-note cue) ---
   preloadSample("radioSwitch", "data/media/soundeffects/radio_switch.wav");
@@ -537,6 +575,8 @@
     shotRifle: playRifleShot,
     radioStatic: playRadioStatic,
     radioStaticToggle: toggleRadioStatic,
+    radioStaticSet: setRadioStatic,
+    heartbeat: setHeartbeat,
     radioSwitch: playRadioSwitch,
     heal: playHeal,
     eat: playEat,

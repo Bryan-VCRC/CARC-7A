@@ -605,3 +605,16 @@ body.fear-active .identity-box {
   animation: fear-shake 0.15s linear infinite;
   filter: saturate(0.4) contrast(1.25) brightness(0.8);
 }
+
+/* ---- Sustained panic effects (held until the GM clears them) ---- */
+body.panic-glitch-hold #app { animation: hard-glitch 0.08s steps(2) infinite; }
+body.panic-glitch-hold .fear-static { opacity: 0.7; z-index: 10060; }
+body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite; }
+
+/* ---- Stress reads red, not blue ---- */
+.stat-stress .stat-name,
+.stat-stress .stat-numbers { color: var(--danger); }
+.stat-stress .stat-pip.filled {
+  background: var(--danger);
+  box-shadow: 0 0 4px var(--danger-glow);
+}

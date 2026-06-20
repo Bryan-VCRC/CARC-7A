@@ -95,82 +95,68 @@ function setFade(ms) {
   for (const ip of bulbs) sendTo(ip, { method: "setUserConfig", params: { fadeIn: ms, fadeOut: ms } });
 }
 
-// Run a rapid burst with fade disabled for crisp on/off, then restore fade.
-function crisp(run, burstMs) {
-  setFade(0);
-  activeTimers.push(setTimeout(run, 130)); // let the zero-fade config land first
-  if (!NO_FADE) {
-    activeTimers.push(setTimeout(function () { setFade(DEFAULT_FADE); }, 130 + burstMs + 400));
-  }
-}
+function restoreFade() { if (!NO_FADE) setFade(DEFAULT_FADE); }
 
-// Hard-ish strobe: flip full-on color <-> off at a fixed interval, then settle.
-// opts: { flashes, interval, color }. WiZ's built-in fade softens the edges a
-// bit — set WIZ_NO_FADE=1 to try disabling it (see start()).
-function strobe(opts) {
-  opts = opts || {};
-  const flashes = opts.flashes || STROBE.flashes;
-  const interval = opts.interval || STROBE.interval;
-  const color = opts.color || STROBE.color;
-  let n = 0;
-  const steps = flashes * 2; // each flash = on + off
+// Continuous red strobe — runs until stopped (fade off for crisp snaps).
+function strobeLoop() {
+  setFade(0);
+  let on = false;
   const t = setInterval(() => {
-    setAll(n % 2 === 0 ? { state: true, ...color } : { state: false });
-    n++;
-    if (n >= steps) { clearInterval(t); setAll({ state: true, ...RESTORE }); }
-  }, interval);
+    on = !on;
+    setAll(on ? { state: true, ...STROBE.color } : { state: false });
+  }, STROBE.interval);
   activeTimers.push(t);
 }
 
-// Inconsistent flicker (failing light): irregular gaps between on/off flips.
-function flicker() {
-  let t = 0;
-  let on = false;
-  for (let i = 0; i < FLICKER.pulses; i++) {
-    on = !on;
-    const params = on ? { state: true, ...FLICKER.on } : { state: false };
-    activeTimers.push(setTimeout(() => setAll(params), t));
-    t += FLICKER.minGap + Math.floor(Math.random() * (FLICKER.maxGap - FLICKER.minGap));
-  }
-  activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), t + 80));
+// Continuous failing-light flicker — runs until stopped.
+function flickerLoop() {
+  setFade(0);
+  const t = setInterval(() => {
+    setAll(Math.random() < 0.45 ? { state: false } : { state: true, ...FLICKER.on });
+  }, 80);
+  activeTimers.push(t);
+}
+
+// Bring the bulbs back to full warm white and stop any running effect.
+function lightsOn() {
+  clearEffects();
+  restoreFade();
+  setAll({ state: true, ...RESTORE });
 }
 
 // --- Map game events to light behavior ---
+// Sustained effects run until turned off: panic carries { on: true/false }.
+// "lights-on" is the master all-clear back to full white.
 function handle(msg) {
   if (!msg || !msg.type) return;
+
+  if (msg.type === "lights-on") { lightsOn(); return; }
 
   if (msg.type === "fear") {
     clearEffects();
     if (msg.active) {
-      setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }); // full-bright red
+      setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }); // full-bright red, held
     } else {
-      setAll({ state: true, ...RESTORE });                      // warm restore
+      restoreFade();
+      setAll({ state: true, ...RESTORE });
     }
     return;
   }
 
   if (msg.type === "panic") {
+    if (msg.action === "static") return; // audio-only on the terminal; lights unaffected
+    const on = msg.on !== false; // default true (back-compat)
     clearEffects();
+    if (!on) { lightsOn(); return; } // toggled off -> back to white
+
     switch (msg.action) {
-      case "glitch": // rapid red strobe, then settle (fade off for crisp snaps)
-        crisp(strobe, STROBE.flashes * 2 * STROBE.interval);
-        break;
-      case "flicker": // inconsistent failing-light flicker (fade off for crisp snaps)
-        crisp(flicker, FLICKER.pulses * FLICKER.maxGap);
-        break;
-      case "blackout": { // cut to black, hard red snap, then settle back to white
+      case "glitch": strobeLoop(); break;                 // red strobe until stopped
+      case "flicker": flickerLoop(); break;               // failing-light flicker until stopped
+      case "blackout": setAll({ state: false }); break;   // dark until stopped
+      case "corrupt": setAll({ state: true, r: 255, g: 0, b: 110, dimming: 100 }); break; // magenta until stopped
+      case "reboot": // one-shot: power down, slow warm fade back up
         setAll({ state: false });
-        activeTimers.push(setTimeout(() => setAll({ state: true, r: 255, g: 0, b: 0, dimming: 100 }), 1500));
-        activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 3200));
-        break;
-      }
-      case "corrupt": // glitchy magenta hold, then settle back to white
-        setAll({ state: true, r: 255, g: 0, b: 110, dimming: 100 });
-        activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 1200));
-        break;
-      case "reboot": // power down, slow warm fade back up
-        setAll({ state: false });
-        activeTimers.push(setTimeout(() => setAll({ state: true, ...RESTORE }), 3000));
+        activeTimers.push(setTimeout(() => { restoreFade(); setAll({ state: true, ...RESTORE }); }, 3000));
         break;
     }
   }
