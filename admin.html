@@ -1229,6 +1229,11 @@
     { name: "PLAYER 2", hp: 6, hpMax: 6, stress: 0, stressMax: 6 },
   ];
 
+  var adminStoryId = "t4-84";
+  function adminStory() {
+    return (window.STORIES && (window.STORIES[adminStoryId] || window.STORIES["t4-84"])) || {};
+  }
+
   // Predefined gear the GM can hand out — full item objects mirroring the
   // single-player catalog (icons, ammo/consumable trackers, fire modes, stats).
   var CO_OP_ITEMS = Object.keys(window.ITEMS).map(function (k) { return window.ITEMS[k]; });
@@ -1397,6 +1402,11 @@
           });
         });
         renderCoopValues();
+        if (typeof msg.storyId === "string" && msg.storyId !== adminStoryId && window.STORIES && window.STORIES[msg.storyId]) {
+          adminStoryId = msg.storyId;
+          renderFieldNotes();
+          log("STORY: " + (adminStory().title || msg.storyId), "ok");
+        }
       }
     });
     GameSync.init("admin");
@@ -1405,9 +1415,9 @@
   }
 
   // --- Field Notes: reveal letters/notes to the crew terminal ---
-  (function buildFieldNotes() {
+  function renderFieldNotes() {
     var wrap = document.getElementById("field-notes");
-    var notes = window.DUO_NOTES || [];
+    var notes = adminStory().notes || [];
     if (!notes.length) {
       wrap.innerHTML = '<div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;">No notes loaded.</div>';
       return;
@@ -1428,7 +1438,8 @@
         log("REVEALED: " + n.title, "ok");
       });
     });
-  })();
+  }
+  renderFieldNotes();
 
   // --- Ambiance: looping background beds with play/pause + volume ---
   var AMBIANCE = [
