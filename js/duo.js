@@ -84,8 +84,8 @@
 
   // Mothership-style stats (2d10+30) and saves (2d10+20), entered from
   // physical rolls during setup.
-  const STAT_KEYS = [["strength", "STR"], ["speed", "SPD"], ["intellect", "INT"], ["combat", "CBT"]];
-  const SAVE_KEYS = [["sanity", "SAN"], ["fear", "FEAR"], ["body", "BODY"]];
+  const STAT_KEYS = [["strength", "Strength"], ["speed", "Speed"], ["intellect", "Intellect"], ["combat", "Combat"]];
+  const SAVE_KEYS = [["sanity", "Sanity"], ["fear", "Fear"], ["body", "Body"]];
 
   function makePlayer() {
     var loadout = { weapon: "revolver", armor: "light" };
@@ -256,7 +256,7 @@
   }
 
   function profileCell(idx, key, label) {
-    return '<div class="ps-cell"><span class="ps-key">' + label + '</span>' +
+    return '<div class="ps-row"><span class="ps-key">' + label + '</span>' +
       '<span class="ps-val" id="prof-' + key + '-' + idx + '">&mdash;</span></div>';
   }
 

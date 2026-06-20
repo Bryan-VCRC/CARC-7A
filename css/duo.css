@@ -801,21 +801,31 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
   border-radius: 3px;
   padding: 10px 12px;
 }
-.ps-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; }
-.ps-grid { display: grid; gap: 8px; }
-.ps-stats { grid-template-columns: repeat(4, 1fr); }
-.ps-saves { grid-template-columns: repeat(3, 1fr); }
-.ps-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
-.ps-key { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); }
-.ps-val { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--text-bright); }
+.ps-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; }
+.ps-grid { display: flex; flex-direction: column; gap: 7px; }
+.ps-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.ps-key {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  letter-spacing: 1px;
+  color: var(--text-bright);
+}
+.ps-val {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--primary);
+  min-width: 1.6em;
+  text-align: right;
+}
 
 /* ---- Setup: stat/save roll entry ---- */
 .setup-rolls { width: 100%; }
 .ss-head { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; }
 .dice-hint { color: var(--primary); letter-spacing: 1px; }
-.ss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 6px; }
-.stat-field { display: flex; flex-direction: column; gap: 3px; }
-.stat-field span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); text-align: center; }
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(90px, 1fr)); gap: 8px; }
+.stat-field { display: flex; flex-direction: column; gap: 4px; }
+.stat-field span { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.5px; color: var(--text-dim); text-align: center; }
 .stat-field input {
   width: 100%;
   padding: 9px 4px;
