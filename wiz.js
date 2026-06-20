@@ -197,12 +197,18 @@ function applyNoFade() {
   console.log("  WiZ:     fade disabled (WIZ_NO_FADE) — crisper everything");
 }
 
+// The crew's WiZ bulbs. WIZ_BULBS env overrides; otherwise these are used
+// (discovery is skipped so only these bulbs are ever driven). Pin them with
+// DHCP reservations in the router so the addresses don't drift.
+const DEFAULT_BULBS = ["192.168.50.96", "192.168.50.138", "192.168.50.28"];
+
 function start() {
   const fromEnv = (process.env.WIZ_BULBS || "").split(",").map(s => s.trim()).filter(Boolean);
-  if (fromEnv.length) {
+  const list = fromEnv.length ? fromEnv : DEFAULT_BULBS;
+  if (list.length) {
     configured = true;
-    fromEnv.forEach(ip => bulbs.add(ip));
-    console.log(`  WiZ:     ${fromEnv.length} bulb(s) configured: ${fromEnv.join(", ")}`);
+    list.forEach(ip => bulbs.add(ip));
+    console.log(`  WiZ:     ${list.length} bulb(s) configured: ${list.join(", ")}`);
     applyNoFade();
     return;
   }
