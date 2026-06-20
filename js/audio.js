@@ -446,18 +446,18 @@
   }
 
   // Preload fear/panic sounds
-  preloadSample("alert", "data/media/375975__glitchedtones__sci-fi-alert-03.wav");
-  preloadSample("error", "data/media/176238__melissapons__sci-fi_short_error.wav");
+  preloadSample("alert", "data/media/sfx/sci-fi-alert.wav");
+  preloadSample("error", "data/media/sfx/sci-fi-error.wav");
 
   // Preload recorded gameplay sounds (fall back to synthesized tones until loaded)
-  preloadSample("gunshot", "data/media/soundeffects/revolver_shot.wav");
-  preloadSample("burst", "data/media/soundeffects/rifle_burst.wav");
-  preloadSample("reload", "data/media/soundeffects/revolver_reload.wav");
-  preloadSample("empty", "data/media/soundeffects/gun_empty.wav");
-  preloadSample("heal", "data/media/soundeffects/heal.mp3");
-  preloadSample("eat", "data/media/soundeffects/eating.aiff");
-  preloadSample("rifleReload", "data/media/soundeffects/rifle_reload.wav");
-  preloadSample("rifleShot", "data/media/soundeffects/rifle_singleshot.wav");
+  preloadSample("gunshot", "data/media/sfx/revolver-shot.wav");
+  preloadSample("burst", "data/media/sfx/rifle-burst.wav");
+  preloadSample("reload", "data/media/sfx/revolver-reload.wav");
+  preloadSample("empty", "data/media/sfx/gun-empty.wav");
+  preloadSample("heal", "data/media/sfx/heal.mp3");
+  preloadSample("eat", "data/media/sfx/eat.aiff");
+  preloadSample("rifleReload", "data/media/sfx/rifle-reload.wav");
+  preloadSample("rifleShot", "data/media/sfx/rifle-shot.wav");
 
   // --- Rifle reload: mag-fed weapons (falls back to the revolver reload) ---
   function playRifleReload() { if (!playSample("rifleReload", 0.9)) playReload(); }
@@ -466,10 +466,10 @@
   function playRifleShot() { if (!playSample("rifleShot", 0.9)) playGunshot(); }
 
   // --- Chainsword: one-shot on use ---
-  preloadSample("chainsword", "data/media/soundeffects/Chainsword.mp3");
+  preloadSample("chainsword", "data/media/sfx/chainsword.mp3");
 
   // --- Radio static: Silent Hill-style comms bed (toggle on/off, loops) ---
-  preloadSample("radioStatic", "data/media/soundeffects/radio_static.mp3");
+  preloadSample("radioStatic", "data/media/sfx/radio-static.mp3");
   function playRadioStatic() { playSample("radioStatic", 0.7); } // one-shot (kept for misc use)
 
   var staticSrc = null;
@@ -510,7 +510,7 @@
   }
 
   // --- Low-health heartbeat (loops quietly while a crew member is at 1 HP) ---
-  preloadSample("heartbeat", "data/media/soundeffects/lowhealth_heartbeat.mp3");
+  preloadSample("heartbeat", "data/media/sfx/heartbeat-low.mp3");
   var heartSrc = null;
   var heartWanted = false;
   function startHeartbeatLoop() {
@@ -543,7 +543,7 @@
   }
 
   // --- Glitch alarm (loops while the glitch / alarm trigger is on) ---
-  preloadSample("glitchAlarm", "data/media/soundeffects/TriggerAlarm.mp3");
+  preloadSample("glitchAlarm", "data/media/sfx/alarm.mp3");
   var alarmSrc = null;
   var alarmWanted = false;
   function startAlarmLoop() {
@@ -595,7 +595,7 @@
   }
 
   // --- Radio switch: short click/squelch (recovered-note cue) ---
-  preloadSample("radioSwitch", "data/media/soundeffects/radio_switch.wav");
+  preloadSample("radioSwitch", "data/media/sfx/radio-switch.wav");
   function playRadioSwitch() { if (!playSample("radioSwitch", 0.6)) playFilter(); }
 
   // --- Heal: medkit recording (falls back to the generic use blip) ---
