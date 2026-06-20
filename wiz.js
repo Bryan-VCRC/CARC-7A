@@ -15,9 +15,32 @@
    ============================================ */
 
 const dgram = require("dgram");
+const os = require("os");
 
 const WIZ_PORT = 38899;
 const BROADCAST_ADDR = "255.255.255.255";
+
+// Build the list of broadcast targets to probe: the global broadcast plus each
+// local interface's directed broadcast (e.g. 192.168.1.255). macOS frequently
+// drops/global-misroutes 255.255.255.255, so the directed address is what
+// actually reaches the bulbs on multi-interface machines.
+function broadcastAddrs() {
+  var addrs = [BROADCAST_ADDR];
+  try {
+    var ifaces = os.networkInterfaces();
+    Object.keys(ifaces).forEach(function (name) {
+      ifaces[name].forEach(function (a) {
+        if (a.family === "IPv4" && !a.internal && a.address && a.netmask) {
+          var ip = a.address.split(".").map(Number);
+          var mask = a.netmask.split(".").map(Number);
+          var bc = ip.map(function (o, i) { return (o & mask[i]) | (~mask[i] & 255); });
+          addrs.push(bc.join("."));
+        }
+      });
+    });
+  } catch (e) {}
+  return addrs;
+}
 
 // Restore color when fear ends / after a panic effect settles (warm white).
 const RESTORE = { r: 255, g: 170, b: 90, dimming: 80 };
@@ -40,7 +63,10 @@ sock.on("error", () => {});     // never let a socket error crash the server
 
 // Collect responders to our broadcast getPilot during discovery.
 sock.on("message", (_buf, rinfo) => {
-  if (!configured && rinfo && rinfo.address) bulbs.add(rinfo.address);
+  if (!configured && rinfo && rinfo.address && !bulbs.has(rinfo.address)) {
+    bulbs.add(rinfo.address);
+    console.log("  WiZ:     found bulb " + rinfo.address);
+  }
 });
 
 function sendTo(ip, payload) {
@@ -135,7 +161,9 @@ function handle(msg) {
 function discover() {
   if (configured) return;
   const probe = Buffer.from(JSON.stringify({ method: "getPilot", params: {} }));
-  try { sock.send(probe, WIZ_PORT, BROADCAST_ADDR); } catch {}
+  broadcastAddrs().forEach(function (addr) {
+    try { sock.send(probe, WIZ_PORT, addr); } catch (e) {}
+  });
 }
 
 // Opt-in: try to disable the bulb's built-in fade for a crisper strobe.
