@@ -4,3 +4,6 @@ node_modules/
 
 # Too big for GitHub (100MB limit) — keep local on each machine
 data/media/Soundtrack.mp3
+
+# SDD scratch (task ledger)
+.superpowers/
