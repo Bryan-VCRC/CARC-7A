@@ -82,9 +82,20 @@
     return "it-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
+  // Mothership-style stats (2d10+30) and saves (2d10+20), entered from
+  // physical rolls during setup.
+  const STAT_KEYS = [["strength", "STR"], ["speed", "SPD"], ["intellect", "INT"], ["combat", "CBT"]];
+  const SAVE_KEYS = [["sanity", "SAN"], ["fear", "FEAR"], ["body", "BODY"]];
+
   function makePlayer() {
     var loadout = { weapon: "revolver", armor: "light" };
-    return { name: "", portrait: null, loadout: loadout, hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax, inventory: buildLoadout(loadout) };
+    return {
+      name: "", portrait: null, loadout: loadout,
+      stats: { strength: null, speed: null, intellect: null, combat: null },
+      saves: { sanity: null, fear: null, body: null },
+      hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax,
+      inventory: buildLoadout(loadout),
+    };
   }
 
   // Portrait list (URLs), loaded from the server's /api/portraits endpoint.
@@ -126,6 +137,8 @@
         if (typeof saved.name === "string") p.name = saved.name;
         if (typeof saved.portrait === "string") p.portrait = saved.portrait;
         if (saved.loadout && typeof saved.loadout === "object") p.loadout = saved.loadout;
+        if (saved.stats) STAT_KEYS.forEach(function (s) { if (typeof saved.stats[s[0]] === "number") p.stats[s[0]] = saved.stats[s[0]]; });
+        if (saved.saves) SAVE_KEYS.forEach(function (s) { if (typeof saved.saves[s[0]] === "number") p.saves[s[0]] = saved.saves[s[0]]; });
         ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
           if (typeof saved[k] === "number") p[k] = saved[k];
         });
@@ -242,6 +255,33 @@
       '</div>';
   }
 
+  function profileCell(idx, key, label) {
+    return '<div class="ps-cell"><span class="ps-key">' + label + '</span>' +
+      '<span class="ps-val" id="prof-' + key + '-' + idx + '">&mdash;</span></div>';
+  }
+
+  function profileBlock(idx) {
+    var stats = STAT_KEYS.map(function (s) { return profileCell(idx, s[0], s[1]); }).join("");
+    var saves = SAVE_KEYS.map(function (s) { return profileCell(idx, s[0], s[1]); }).join("");
+    return '' +
+      '<div class="profile-stats">' +
+      '<div class="ps-group"><div class="ps-title">STATS</div><div class="ps-grid ps-stats">' + stats + '</div></div>' +
+      '<div class="ps-group"><div class="ps-title">SAVES</div><div class="ps-grid ps-saves">' + saves + '</div></div>' +
+      '</div>';
+  }
+
+  function renderProfile(idx) {
+    var p = STATE.players[idx];
+    STAT_KEYS.forEach(function (s) {
+      var el = document.getElementById("prof-" + s[0] + "-" + idx);
+      if (el) el.textContent = (p.stats && p.stats[s[0]] != null) ? p.stats[s[0]] : "—";
+    });
+    SAVE_KEYS.forEach(function (s) {
+      var el = document.getElementById("prof-" + s[0] + "-" + idx);
+      if (el) el.textContent = (p.saves && p.saves[s[0]] != null) ? p.saves[s[0]] : "—";
+    });
+  }
+
   function columnHTML(idx) {
     return '' +
       '<section class="player-col" data-player="' + idx + '">' +
@@ -264,7 +304,7 @@
       '</nav>' +
       '<div class="col-body">' +
       '<section class="panel col-vitals active" id="panel-vitals-' + idx + '">' +
-      statBlock("hp", idx) + statBlock("stress", idx) +
+      statBlock("hp", idx) + statBlock("stress", idx) + profileBlock(idx) +
       '</section>' +
       '<section class="panel col-gear" id="panel-gear-' + idx + '">' +
       '<div class="col-gear-head"><span class="gear-title"><span class="flicker">&#9646;</span> GEAR</span></div>' +
@@ -437,6 +477,7 @@
     if (downed) downed.classList.toggle("hidden", p.hp > 0);
 
     updateMonitorLabel(idx);
+    renderProfile(idx);
     updateHeartbeat();
   }
 
@@ -1634,6 +1675,19 @@
     return '<div class="setup-choice"><span class="choice-label">' + label + '</span><div class="choice-opts">' + btns + '</div></div>';
   }
 
+  function statInput(idx, group, key, label) {
+    var p = STATE.players[idx];
+    var v = (p[group] && p[group][key] != null) ? p[group][key] : "";
+    return '<label class="stat-field"><span>' + label + '</span>' +
+      '<input type="number" inputmode="numeric" data-player="' + idx + '" data-group="' + group + '" data-key="' + key + '" value="' + v + '"></label>';
+  }
+
+  function rollSection(idx, group, label, hint, keys) {
+    var fields = keys.map(function (s) { return statInput(idx, group, s[0], s[1]); }).join("");
+    return '<div class="setup-rolls"><div class="ss-head">' + label +
+      ' <span class="dice-hint">' + hint + '</span></div><div class="ss-grid">' + fields + '</div></div>';
+  }
+
   function setupCardHTML(idx) {
     return '' +
       '<div class="setup-card" data-setup="' + idx + '">' +
@@ -1644,6 +1698,8 @@
       '</div>' +
       '<div class="setup-name" id="setup-name-' + idx + '">PLAYER ' + (idx + 1) + '</div>' +
       '</button>' +
+      rollSection(idx, "stats", "STATS", "roll 2d10 + 30", STAT_KEYS) +
+      rollSection(idx, "saves", "SAVES", "roll 2d10 + 20", SAVE_KEYS) +
       choiceRow(idx, "weapon", "WEAPON", [["chainsword", "CHAINSWORD"], ["revolver", "REVOLVER"]]) +
       choiceRow(idx, "armor", "ARMOR", [["light", "LIGHT ARMOR"], ["leather", "LEATHER JACKET"]]) +
       '<div class="setup-fixed">Everyone also carries: Flashlight &middot; 20ft Rope &middot; First Aid Kit</div>' +
@@ -1661,6 +1717,14 @@
       wrap.querySelector('.setup-identity[data-setup="' + idx + '"]').addEventListener("click", function () { openIdentity(idx); });
       wrap.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
         btn.addEventListener("click", function () { setLoadout(idx, btn.dataset.slot, btn.dataset.val); });
+      });
+      wrap.querySelectorAll('input[data-player="' + idx + '"][data-group]').forEach(function (inp) {
+        inp.addEventListener("input", function () {
+          var v = parseInt(inp.value, 10);
+          STATE.players[idx][inp.dataset.group][inp.dataset.key] = isNaN(v) ? null : v;
+          renderProfile(idx);
+          save();
+        });
       });
       renderIdentity(idx);
       renderSetupChoices(idx);

@@ -95,8 +95,8 @@
 /* Portrait avatar (tap to open the picker) */
 .col-portrait {
   flex-shrink: 0;
-  width: 76px;
-  height: 76px;
+  width: 104px;
+  height: 104px;
   border-radius: 50%;
   overflow: hidden;
   padding: 0;
@@ -792,3 +792,42 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
   line-height: 1.5;
   margin-top: 2px;
 }
+
+/* ---- Profile stats + saves (shown in vitals) ---- */
+.profile-stats { display: flex; flex-direction: column; gap: 10px; }
+.ps-group {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 10px 12px;
+}
+.ps-title { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 8px; }
+.ps-grid { display: grid; gap: 8px; }
+.ps-stats { grid-template-columns: repeat(4, 1fr); }
+.ps-saves { grid-template-columns: repeat(3, 1fr); }
+.ps-cell { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.ps-key { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); }
+.ps-val { font-family: var(--font-display); font-weight: 700; font-size: 20px; color: var(--text-bright); }
+
+/* ---- Setup: stat/save roll entry ---- */
+.setup-rolls { width: 100%; }
+.ss-head { font-family: var(--font-mono); font-size: 10px; letter-spacing: 2px; color: var(--text-dim); margin-bottom: 6px; }
+.dice-hint { color: var(--primary); letter-spacing: 1px; }
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(56px, 1fr)); gap: 6px; }
+.stat-field { display: flex; flex-direction: column; gap: 3px; }
+.stat-field span { font-family: var(--font-mono); font-size: 9px; letter-spacing: 1px; color: var(--text-dim); text-align: center; }
+.stat-field input {
+  width: 100%;
+  padding: 9px 4px;
+  text-align: center;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-bright);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  -webkit-user-select: text;
+  user-select: text;
+}
+.stat-field input:focus { outline: none; border-color: var(--primary-dim); }
