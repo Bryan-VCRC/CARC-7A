@@ -1,7 +1,8 @@
 {
   "scripts": {
     "start": "node server.js",
-    "find-bulbs": "node find-bulbs.js"
+    "find-bulbs": "node find-bulbs.js",
+    "test": "node --test"
   },
   "dependencies": {
     "ws": "^8.20.0"
