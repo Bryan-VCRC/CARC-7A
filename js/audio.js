@@ -539,6 +539,39 @@
     else { heartWanted = false; stopHeartbeatLoop(); }
   }
 
+  // --- Glitch alarm (loops while the glitch / alarm trigger is on) ---
+  preloadSample("glitchAlarm", "data/media/soundeffects/TriggerAlarm.mp3");
+  var alarmSrc = null;
+  var alarmWanted = false;
+  function startAlarmLoop() {
+    if (!ensureContext() || alarmSrc) return;
+    var s = samples["glitchAlarm"];
+    if (!s) return;
+    function play(buffer) {
+      if (alarmSrc || !alarmWanted) return;
+      var src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.loop = true;
+      var g = ctx.createGain();
+      g.gain.value = 0.5;
+      src.connect(g);
+      g.connect(ctx.destination);
+      src.start();
+      alarmSrc = { src: src, gain: g };
+    }
+    if (s.decoded) play(s.decoded);
+    else if (s.raw) ctx.decodeAudioData(s.raw.slice(0), function (d) { s.decoded = d; s.raw = null; play(d); });
+  }
+  function stopAlarmLoop() {
+    if (!alarmSrc) return;
+    try { alarmSrc.src.stop(); alarmSrc.src.disconnect(); alarmSrc.gain.disconnect(); } catch (e) {}
+    alarmSrc = null;
+  }
+  function setAlarm(on) {
+    if (on) { alarmWanted = true; startAlarmLoop(); }
+    else { alarmWanted = false; stopAlarmLoop(); }
+  }
+
   // --- Radio switch: short click/squelch (recovered-note cue) ---
   preloadSample("radioSwitch", "data/media/soundeffects/radio_switch.wav");
   function playRadioSwitch() { if (!playSample("radioSwitch", 0.6)) playFilter(); }
@@ -577,6 +610,7 @@
     radioStaticToggle: toggleRadioStatic,
     radioStaticSet: setRadioStatic,
     heartbeat: setHeartbeat,
+    alarm: setAlarm,
     radioSwitch: playRadioSwitch,
     heal: playHeal,
     eat: playEat,

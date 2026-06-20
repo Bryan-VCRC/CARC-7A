@@ -1067,13 +1067,19 @@
       if (on && navigator.vibrate) navigator.vibrate(60);
       return;
     }
+    if (action === "alarm") { // sound only — no lights, no visuals
+      if (SFX.alarm) SFX.alarm(on);
+      if (on && navigator.vibrate) navigator.vibrate(60);
+      return;
+    }
     if (action === "reboot") { panicReboot(); return; }
 
-    clearVisualFx();   // one visual effect at a time
+    clearVisualFx();   // one visual effect at a time (also stops the glitch alarm)
     if (!on) return;   // toggled off — already cleared
     switch (action) {
       case "glitch":
         document.body.classList.add("panic-glitch-hold");
+        if (SFX.alarm) SFX.alarm(true);
         if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
         break;
       case "corrupt":
@@ -1103,12 +1109,14 @@
     }
   }
 
-  // Stop the visual panic effects (they're mutually exclusive).
+  // Stop the visual panic effects (they're mutually exclusive). Also stops the
+  // glitch alarm, which lives with the glitch effect.
   function clearVisualFx() {
     document.body.classList.remove("panic-glitch-hold", "panic-corrupt-hold", "panic-glitch", "panic-corrupt");
     setFlicker(false);
     var overlay = document.getElementById("blackout-overlay");
     if (overlay) overlay.classList.remove("active");
+    if (SFX.alarm) SFX.alarm(false);
   }
 
   // Master all-clear (the GM's "LIGHTS ON"): stop every terminal effect.

@@ -144,7 +144,7 @@ function handle(msg) {
   }
 
   if (msg.type === "panic") {
-    if (msg.action === "static") return; // audio-only on the terminal; lights unaffected
+    if (msg.action === "static" || msg.action === "alarm") return; // audio-only; lights unaffected
     const on = msg.on !== false; // default true (back-compat)
     clearEffects();
     if (!on) { lightsOn(); return; } // toggled off -> back to white

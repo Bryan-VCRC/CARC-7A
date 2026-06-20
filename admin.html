@@ -821,7 +821,7 @@
     <div class="panic-grid">
       <button class="panic-btn" id="panic-glitch" data-cmd="glitch">
         <span class="btn-icon">&#9608;</span>
-        GLITCH BURST
+        ALARM &mdash; GLITCH
       </button>
       <button class="panic-btn" id="panic-blackout" data-cmd="blackout">
         <span class="btn-icon">&#9679;</span>
@@ -842,6 +842,10 @@
       <button class="panic-btn" id="panic-static" data-cmd="static">
         <span class="btn-icon">&#128251;</span>
         RADIO STATIC
+      </button>
+      <button class="panic-btn" id="panic-alarm" data-cmd="alarm">
+        <span class="btn-icon">&#128680;</span>
+        ALARM (SOUND)
       </button>
     </div>
     <button id="lights-on" class="lights-on-btn">&#9728; LIGHTS ON &mdash; ALL CLEAR</button>
@@ -898,12 +902,13 @@
 
   // Panic triggers
   var panicLabels = {
-    glitch: "GLITCH BURST",
+    glitch: "ALARM — GLITCH",
     blackout: "BLACKOUT",
     corrupt: "DATA CORRUPT",
     reboot: "FORCE REBOOT",
     flicker: "RAPID STROBE",
-    static: "RADIO STATIC"
+    static: "RADIO STATIC",
+    alarm: "ALARM (SOUND)"
   };
 
   // Visual effects are mutually exclusive (one at a time); static is an
