@@ -1,3 +1,6 @@
 node_modules/
 *.log
 .DS_Store
+
+# Too big for GitHub (100MB limit) — keep local on each machine
+data/media/Soundtrack.mp3
