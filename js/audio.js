@@ -572,38 +572,23 @@
     else { alarmWanted = false; stopAlarmLoop(); }
   }
 
-  // --- Ambiance beds: looping background tracks by URL, each with its own
-  // volume. Not triggers — they just hum along until paused. ---
-  var ambiances = {};   // url -> { src, gain }
-  var ambianceBuf = {}; // url -> decoded AudioBuffer (cache)
+  // --- Ambiance beds: looping background tracks by URL, each its own lane
+  // with its own volume. Uses streaming <audio> (not decodeAudioData) so big
+  // files like a full soundtrack don't get loaded/decoded into memory. ---
+  var ambEls = {}; // url -> HTMLAudioElement
   function ambiance(url, on, volume) {
-    if (!ensureContext() || !url) return;
-    var vol = (volume == null) ? 0.5 : volume;
-    var a = ambiances[url];
-    if (!on) {
-      if (a) { try { a.src.stop(); a.src.disconnect(); a.gain.disconnect(); } catch (e) {} delete ambiances[url]; }
-      return;
+    if (!url) return;
+    var vol = Math.max(0, Math.min(1, volume == null ? 0.5 : volume));
+    var el = ambEls[url];
+    if (!on) { if (el) el.pause(); return; }
+    if (!el) {
+      el = new Audio(url);
+      el.loop = true;
+      el.preload = "auto";
+      ambEls[url] = el;
     }
-    if (a) { a.gain.gain.value = vol; return; } // already playing — just adjust volume
-    function startWith(buf) {
-      if (ambiances[url]) { ambiances[url].gain.gain.value = vol; return; }
-      var src = ctx.createBufferSource();
-      src.buffer = buf;
-      src.loop = true;
-      var g = ctx.createGain();
-      g.gain.value = vol;
-      src.connect(g);
-      g.connect(ctx.destination);
-      src.start();
-      ambiances[url] = { src: src, gain: g };
-    }
-    if (ambianceBuf[url]) { startWith(ambianceBuf[url]); return; }
-    fetch(url)
-      .then(function (r) { return r.arrayBuffer(); })
-      .then(function (b) {
-        ctx.decodeAudioData(b, function (buf) { ambianceBuf[url] = buf; startWith(buf); }, function () {});
-      })
-      .catch(function () {});
+    el.volume = vol;
+    if (el.paused) { var p = el.play(); if (p && p.catch) p.catch(function () {}); }
   }
 
   // --- Radio switch: short click/squelch (recovered-note cue) ---
