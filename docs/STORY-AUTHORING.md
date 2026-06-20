@@ -7,13 +7,36 @@ data*: a briefing, journal entries, field notes the GM reveals, and archive
 images. Add a story and it appears on the launcher's **SELECT ADVENTURE**
 screen automatically — no code changes, no API calls.
 
-This doc is everything you need to author one. The fastest path:
+There are two ways to add a story. **The in-app screen is the easy path** —
+no file editing.
 
-1. Copy the **ChatGPT prompt** at the bottom into ChatGPT.
-2. Fill in the two blanks (your premise + a story id) and send it.
+### Easy path: the in-app "Add New Story" screen
+
+1. Launcher → **TWO PLAYER CO-OP → SELECT ADVENTURE → + ADD NEW STORY**.
+2. Tap **COPY CHATGPT PROMPT**, paste it into ChatGPT, fill the two blanks
+   (your premise + a story id), and send.
+3. Paste ChatGPT's output into the box and tap **ADD STORY**. The story is
+   saved in the browser and appears in your adventure list right away.
+4. The screen lists the image filenames to drop into
+   `data/stories/<your-id>/`. Add them and you're done.
+
+Stories added this way live in your browser's local storage (on the tablet
+you play on). They're real and playable immediately. If you ever want to bake
+one permanently into the repo, the success screen has a **COPY FOR
+stories.js** button — paste that into `js/stories.js` (see below). The prompt
+the button copies is the canonical one in `docs/story-prompt.txt`.
+
+### Manual path: edit `js/stories.js` directly
+
+1. Copy the **ChatGPT prompt** at the bottom of this doc (same text as the
+   in-app button / `docs/story-prompt.txt`) into ChatGPT.
+2. Fill in the two blanks and send it.
 3. Paste its output into `js/stories.js`.
 4. Drop the images it describes into `data/stories/<your-id>/`.
 5. Reload the launcher and pick your story.
+
+The rest of this doc explains the pack format — useful either way, and
+required reading if you go manual.
 
 ---
 

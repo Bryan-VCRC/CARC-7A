@@ -186,3 +186,203 @@
   color: var(--primary);
   border-color: var(--primary);
 }
+
+/* User-added story tag + remove button */
+.mode-tag.user {
+  background: var(--primary);
+  color: var(--bg-deep);
+}
+
+.mode-del {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-dim);
+  font-size: 13px;
+  background: rgba(0, 0, 0, 0.3);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.mode-del:hover {
+  color: var(--danger, #ff5566);
+  border-color: var(--danger, #ff5566);
+  background: rgba(255, 60, 80, 0.12);
+}
+
+/* "Add new story" card reads as an action, not an adventure */
+.add-card {
+  border-left-color: var(--secondary);
+  border-style: dashed;
+}
+
+.add-card .mode-glyph svg { stroke: var(--secondary); }
+
+/* ============================================
+   Author-a-story screen
+   ============================================ */
+.author-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.author-step {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--primary);
+  border-radius: 3px;
+  padding: 16px 16px 18px;
+}
+
+.author-step-head {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 2px;
+  color: var(--text-bright);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.author-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--primary);
+  border-radius: 50%;
+  color: var(--primary);
+  font-size: 12px;
+}
+
+.author-hint {
+  margin: 8px 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.author-hint code,
+.author-result code {
+  font-family: var(--font-mono);
+  color: var(--secondary);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 1px 5px;
+  border-radius: 2px;
+  font-size: 0.92em;
+}
+
+.author-input {
+  width: 100%;
+  min-height: 160px;
+  resize: vertical;
+  background: var(--bg-deep);
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  color: var(--text-normal);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  padding: 12px;
+}
+
+.author-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 14px var(--primary-glow);
+}
+
+.author-btn {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  border-left: 3px solid var(--primary);
+  color: var(--text-bright);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  padding: 12px 18px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.author-btn:hover {
+  background: var(--bg-hover);
+  box-shadow: 0 0 16px var(--primary-glow);
+}
+
+.author-btn.confirm {
+  background: var(--primary);
+  color: var(--bg-deep);
+  border-color: var(--primary);
+}
+
+.author-copied {
+  margin-left: 12px;
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--primary);
+}
+
+.author-result {
+  border: 1px solid var(--border-color);
+  border-radius: 3px;
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-normal);
+}
+
+.author-result.hidden { display: none; }
+
+.author-result.ok { border-left: 3px solid var(--primary); }
+.author-result.err { border-left: 3px solid var(--danger, #ff5566); }
+
+.ar-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 1px;
+  color: var(--text-bright);
+  margin-bottom: 6px;
+}
+
+.ar-sub,
+.ar-warn-h {
+  margin-top: 12px;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.ar-files,
+.ar-errs,
+.ar-warns {
+  margin: 8px 0 0;
+  padding-left: 20px;
+}
+
+.ar-files li { font-family: var(--font-mono); color: var(--secondary); }
+.ar-errs li { color: var(--danger, #ff5566); }
+.ar-warns li { color: var(--text-dim); }
+.ar-files li, .ar-errs li, .ar-warns li { margin-bottom: 4px; }
+
+.ar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}

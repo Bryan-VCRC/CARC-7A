@@ -1,0 +1,62 @@
+You are writing a STORY PACK for a 2-player co-op horror tabletop companion
+app (space survival horror, Mothership / Alien / Silent Hill tone). Output is
+PURE DATA in a specific JavaScript object format — narrative only, no game
+mechanics, no new code.
+
+STORY PREMISE (write the story around this):
+<<< describe your premise in 1-3 sentences here >>>
+
+STORY ID (lowercase, hyphenated, no spaces — also the image folder name):
+<<< e.g. derelict-halls >>>
+
+Produce ONE JavaScript object literal for that story id, exactly in this
+shape (this is the real schema — follow field names and types precisely):
+
+"<story-id>": {
+  title: "Short Title: Tagline",
+  blurb: "One or two sentence hook, shown on the launcher.",
+  briefing: [
+    // 12-20 short lines for a typed-out intro crawl. "" = blank spacer line.
+    // Open with a header line, end on a hook. Keep lines short (tablet width).
+  ],
+  journal: [
+    // 3 starting records the crew can read immediately. Each:
+    // { id, type, title, date?, author?, classification?, body, image? }
+    // - id: unique, lowercase-hyphenated (e.g. "log-contract")
+    // - type: short chip tag like "memo" | "log" | "document"
+    // - body: multi-line allowed (use \n)
+  ],
+  notes: [
+    // 12-16 field notes the GM reveals one at a time. Each:
+    // { id, tone, title, body, image?, effect? }
+    // - tone: "casual" | "dread" | "cryptic"
+    // - ORDER them as a mood arc: casual (mundane, human) -> dread (wrong)
+    //   -> cryptic (rules/warnings). The temperature should drop as they go.
+    // - Exactly ONE note must be: tone "cryptic", effect: "allhere",
+    //   with body "WE ARE ALL HERE.\n".repeat(60).trim() (a scripted
+    //   set-piece — keep that body literally).
+  ],
+  archives: [
+    // 5-6 images the crew uncovers. Each:
+    // { id, type: "image", name, date?, requires, description?, image }
+    // - requires: the id of a journal entry OR a note that unlocks this image
+    // - image: a BARE filename, e.g. "corridor.png" (no path)
+    // - The FIRST archive is the establishing exterior shot.
+  ],
+}
+
+RULES:
+- Image fields are BARE filenames only (e.g. "corridor.png"), never paths.
+- Every archive's `requires` must match a real id from journal or notes.
+- All ids unique within the pack.
+- Keep exactly one note with effect: "allhere".
+- Tone: dread by implication, not gore. Mundane human details (chore lists,
+  birthday cards, inside jokes) that curdle into wrongness land hardest.
+- Output ONLY the object literal (starting at "<story-id>": { ), ready to
+  paste as a new entry inside window.STORIES. No prose, no markdown fences.
+
+AFTER the object, list the image filenames you used and a one-line art
+description for each, so I can generate them. Use this style for every image:
+"Cinematic found-footage horror still aboard a derelict spacecraft; grimy
+industrial sci-fi, dim low-key lighting with one cold light source, deep
+shadow, haze, muted rust/teal/amber palette, 35mm grain, no text."

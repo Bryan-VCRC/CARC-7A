@@ -75,8 +75,44 @@
     </footer>
   </div>
 
+  <!-- Author a new story (co-op) -->
+  <div id="author" class="menu hidden">
+    <header class="menu-header">
+      <div class="menu-title">ADD NEW STORY</div>
+      <div class="menu-subtitle">CO-OP OPERATIONS // AUTHOR AN ADVENTURE</div>
+    </header>
+
+    <div class="author-body">
+      <div class="author-step">
+        <div class="author-step-head"><span class="author-num">1</span> COPY THE PROMPT</div>
+        <p class="author-hint">Paste it into ChatGPT and fill the two blanks (your premise + a story id).</p>
+        <button class="author-btn" id="author-copy">COPY CHATGPT PROMPT</button>
+        <span id="author-copied" class="author-copied hidden">COPIED &#10003;</span>
+      </div>
+
+      <div class="author-step">
+        <div class="author-step-head"><span class="author-num">2</span> PASTE THE RESULT</div>
+        <p class="author-hint">Paste ChatGPT&rsquo;s output below &mdash; it starts with <code>"your-id": {</code></p>
+        <textarea id="author-input" class="author-input" spellcheck="false" autocomplete="off" placeholder='"derelict-halls": { title: "...", briefing: [ ... ], ... }'></textarea>
+      </div>
+
+      <div class="author-step">
+        <div class="author-step-head"><span class="author-num">3</span> ADD IT</div>
+        <button class="author-btn confirm" id="author-add">ADD STORY</button>
+      </div>
+
+      <div id="author-result" class="author-result hidden"></div>
+    </div>
+
+    <footer class="menu-footer">
+      <button class="menu-back-btn" id="author-back">&#9664; BACK</button>
+    </footer>
+  </div>
+
   <script src="js/audio.js"></script>
   <script src="js/stories.js"></script>
+  <script src="js/user-stories.js"></script>
+  <script src="js/story-import.js"></script>
   <script src="js/menu.js"></script>
 </body>
 </html>
