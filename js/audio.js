@@ -465,6 +465,9 @@
   // --- Rifle single shot: mag-fed weapons (falls back to the revolver shot) ---
   function playRifleShot() { if (!playSample("rifleShot", 0.9)) playGunshot(); }
 
+  // --- Chainsword: one-shot on use ---
+  preloadSample("chainsword", "data/media/soundeffects/Chainsword.mp3");
+
   // --- Radio static: Silent Hill-style comms bed (toggle on/off, loops) ---
   preloadSample("radioStatic", "data/media/soundeffects/radio_static.mp3");
   function playRadioStatic() { playSample("radioStatic", 0.7); } // one-shot (kept for misc use)
@@ -612,6 +615,7 @@
   }
 
   window.SFX = {
+    sample: playSample, // play any preloaded one-shot by name (e.g. item use sounds)
     tab: playTab,
     select: playSelect,
     back: playBack,

@@ -24,6 +24,7 @@
     chainsword: {
       type: "weapon", name: "Chainsword", icon: "icons/items/knife.svg", quantity: 1,
       description: "Revs hot, bites deep. Loud — and everything on this ship can hear it.",
+      sfx: "chainsword", sfxLabel: "REV THE CHAINSWORD",
       stats: { "Damage": "2d10", "Range": "Adjacent", "Condition": "Hungry" },
     },
     light: {
@@ -601,6 +602,11 @@
     var pic = itemPic(item);
     var picHtml = pic ? '<img class="item-pic" src="' + pic + '" alt="" draggable="false">' : "";
 
+    // Simple one-shot sound action (e.g. chainsword) — no ammo/uses tracking.
+    var soundHtml = (item.sfx && !item.ammo && !item.consumable)
+      ? '<div class="weapon-actions"><button class="weapon-action-btn sfx-btn">' + escapeHtml(item.sfxLabel || "USE") + '</button></div>'
+      : "";
+
     content.innerHTML = '' +
       picHtml +
       '<div class="doc-header">' +
@@ -608,10 +614,16 @@
       '<div class="doc-meta"><span>TYPE: ' + item.type.toUpperCase() + '</span><span>QTY: ' + item.quantity + '</span></div>' +
       '</div>' +
       '<div class="doc-body">' + escapeHtml(item.description) + '</div>' +
-      statsHtml + ammoHtml + consumableHtml;
+      statsHtml + ammoHtml + consumableHtml + soundHtml;
 
     if (item.ammo) wireAmmoActions(idx, item, content);
     if (item.consumable) wireConsumableActions(idx, item, content);
+    if (soundHtml) {
+      content.querySelector(".sfx-btn").addEventListener("click", function () {
+        if (SFX.sample) SFX.sample(item.sfx, 0.9);
+        if (navigator.vibrate) navigator.vibrate([30, 40, 60]);
+      });
+    }
 
     gridEl(idx).style.display = "none";
     var head = document.querySelector("#panel-gear-" + idx + " .col-gear-head");
