@@ -81,7 +81,9 @@
   }
 
   // --- Save / Load ---
-  const SAVE_KEY = "carc7a_duo_save";
+  // Scope the save per story so switching adventures never restores another
+  // story's notes/intro state (or resolves its bare image names wrongly).
+  const SAVE_KEY = "carc7a_duo_save_" + STORY_ID;
 
   function save() {
     try {
