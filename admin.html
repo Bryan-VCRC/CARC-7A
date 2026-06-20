@@ -1231,51 +1231,7 @@
 
   // Predefined gear the GM can hand out — full item objects mirroring the
   // single-player catalog (icons, ammo/consumable trackers, fire modes, stats).
-  var CO_OP_ITEMS = [
-    { type: "weapon", name: "Revolver", icon: "icons/items/revolver.svg", quantity: 1,
-      description: "Six rounds, no frills. Loud enough to hear through a bulkhead.",
-      ammo: { current: 6, magCapacity: 6, spareMags: 2, magLabel: "Cylinder", spareLabel: "Speedloaders" },
-      fireModes: ["semi"], stats: { "Damage": "1d10", "Range": "Medium", "Condition": "Worn" } },
-    { type: "weapon", name: "Pulse Carbine", icon: "icons/items/carbine.svg", quantity: 1,
-      description: "Fires charged kinetic rounds. Accurate, reliable, kicks like a mule.",
-      ammo: { current: 20, magCapacity: 20, spareMags: 2, magLabel: "Magazine", spareLabel: "Magazines" },
-      fireModes: ["semi", "burst"], stats: { "Damage": "2d10 (Semi) / 3d10 (Burst)", "Range": "Long", "Condition": "Functional" } },
-    { type: "weapon", name: "Combat Knife", icon: "icons/items/knife.svg", quantity: 1,
-      description: "Standard issue. Works on anything that gets too close.",
-      stats: { "Damage": "1d10", "Range": "Adjacent", "Condition": "Sharp" } },
-    { type: "armor", name: "Light Military Armor", icon: "icons/items/armor.svg", quantity: 1,
-      description: "Ceramic plating over a flex underlayer. Won't stop everything. Stops enough.",
-      stats: { "Armor Points": "2 AP", "Speed Penalty": "-1 Speed", "Condition": "Scuffed" } },
-    { type: "armor", name: "Helmet", icon: "icons/items/helmet.svg", quantity: 1,
-      description: "Sealed, reinforced. Built-in visor with basic HUD.",
-      stats: { "Armor Points": "1 AP (Head)", "HUD": "Basic targeting, O2 readout", "Seal": "Vacuum-rated", "Condition": "Functional" } },
-    { type: "tool", name: "Flashlight", icon: "icons/items/flashlight.svg", quantity: 1,
-      description: "High-beam, long battery. The dark is everywhere out here.",
-      consumable: { current: 12, max: 12, unit: "hours", perUse: 1, verb: "DRAIN", useLabel: "USE 1 HOUR", depletedMsg: "BATTERY DEAD" },
-      stats: { "Beam": "High intensity", "Condition": "Functional" } },
-    { type: "medical", name: "First Aid Kit", icon: "icons/items/firstaid.svg", quantity: 1,
-      description: "Bandages, sealant foam, a basic stimshot. Buys time.",
-      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL d5", depletedMsg: "KIT EMPTY" },
-      stats: { "Heals": "Roll d5 — GM applies", "Contents": "Bandages, foam sealant, stimshot" } },
-    { type: "medical", name: "Defibrillator", icon: "icons/items/firstaid.svg", quantity: 1,
-      description: "Two paddles and a prayer. Jump-starts a downed crewmate.",
-      consumable: { current: 2, max: 2, unit: "charges", perUse: 1, verb: "SHOCK", useLabel: "DEFIB", depletedMsg: "BATTERY DEAD" },
-      stats: { "Use": "Revive a downed ally — roll d3, GM applies", "Note": "Cannot be used on yourself" } },
-    { type: "consumable", name: "Combat Stim", icon: "icons/items/stim.svg", quantity: 1,
-      description: "One use. Keeps you moving when your body says stop. You'll feel it later.",
-      consumable: { current: 1, max: 1, unit: "dose", perUse: 1, verb: "INJECT", useLabel: "INJECT STIM", depletedMsg: "STIM SPENT" },
-      stats: { "Effect": "Ignore wounds, +1 Speed for 10 min", "Side Effect": "Stress +2 when it wears off" } },
-    { type: "consumable", name: "Rations", icon: "icons/items/rations.svg", quantity: 3,
-      description: "Three days of food bars. They taste like nothing on purpose.",
-      consumable: { current: 3, max: 3, unit: "days", perUse: 1, verb: "EAT", useLabel: "CONSUME RATION", depletedMsg: "NO RATIONS LEFT" },
-      stats: { "Nutrition": "1 day per unit", "Taste": "Intentionally absent" } },
-    { type: "tool", name: "Comms Unit", icon: "icons/items/comms.svg", quantity: 1,
-      description: "Short range radio. Works unless the ship doesn't want it to.",
-      stats: { "Range": "Short (shipboard)", "Encryption": "Standard", "Battery": "24 hours", "Condition": "Functional" } },
-    { type: "tool", name: "Paracord", icon: "icons/items/paracord.svg", quantity: 1,
-      description: "Fifty feet. Marines find a use for it every single time.",
-      stats: { "Length": "50 feet", "Rating": "550 lb tensile", "Condition": "New" } },
-  ];
+  var CO_OP_ITEMS = Object.keys(window.ITEMS).map(function (k) { return window.ITEMS[k]; });
 
   function itemOptionLabel(it) {
     if (it.ammo) return it.name + "  ·  " + it.ammo.magCapacity + " rd";
