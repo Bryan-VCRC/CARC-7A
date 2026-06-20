@@ -48,8 +48,24 @@
   // Portrait list (URLs), loaded from the server's /api/portraits endpoint.
   var PORTRAITS = [];
 
+  // --- Active story pack ---
+  // Which story pack is active. Chosen via ?story=<id>; falls back to t4-84.
+  var REQUESTED_STORY = (function () {
+    try { return new URLSearchParams(window.location.search).get("story"); }
+    catch (e) { return null; }
+  })();
+  var STORY_ID = (window.STORIES && REQUESTED_STORY && window.STORIES[REQUESTED_STORY]) ? REQUESTED_STORY : "t4-84";
+  function activeStory() {
+    return (window.STORIES && (window.STORIES[STORY_ID] || window.STORIES["t4-84"])) || {};
+  }
+  // Resolve a pack's bare image filename to its on-disk path.
+  function storyImg(name) {
+    return name ? ("data/stories/" + STORY_ID + "/" + name) : "";
+  }
+
   // --- State ---
   const STATE = {
+    storyId: STORY_ID,
     view: ["vitals", "vitals"], // per-player sub-view
     openItem: [null, null],     // id of the item whose detail is open, per column
     notes: [],                  // field notes recovered (revealed by the GM)
@@ -928,6 +944,7 @@
   function snapshot() {
     return {
       type: "coop-state",
+      storyId: STORY_ID,
       players: STATE.players.map(function (p, i) {
         return { name: displayName(i), hp: p.hp, hpMax: p.hpMax, stress: p.stress, stressMax: p.stressMax };
       }),
@@ -1065,7 +1082,7 @@
         id: note.id,
         type: "note",
         title: note.title || "Recovered Note",
-        date: "RECOVERED // T4-84",
+        date: "RECOVERED",
         author: "FIELD NOTE",
         classification: note.tone || "",
         body: note.body || "",
@@ -1385,16 +1402,16 @@
 
   // --- Ship records (shared journal + archives) ---
   function archiveJournal() {
-    var base = window.DUO_JOURNAL || ((typeof JOURNAL_ENTRIES !== "undefined") ? JOURNAL_ENTRIES : []);
+    var base = activeStory().journal || [];
     // Recovered field notes sit on top (newest first), then the briefing.
     return STATE.notes.concat(base);
   }
   function archiveMedia() {
-    if (!window.DUO_ARCHIVES) return (typeof MEDIA_FILES !== "undefined") ? MEDIA_FILES : [];
+    var archives = activeStory().archives || [];
     // Only show an image once its related journal entry/note is in play.
     var present = {};
     archiveJournal().forEach(function (e) { present[e.id] = true; });
-    return window.DUO_ARCHIVES.filter(function (m) { return !m.requires || present[m.requires]; });
+    return archives.filter(function (m) { return !m.requires || present[m.requires]; });
   }
 
   function entryRow(id, type, title, meta) {
@@ -1446,7 +1463,7 @@
     var meta = '<span>' + escapeHtml(e.date || "") + '</span>' +
       (e.author ? '<span>' + escapeHtml(e.author) + '</span>' : '') +
       (e.classification ? '<span>' + escapeHtml(String(e.classification).toUpperCase()) + '</span>' : '');
-    var img = e.image ? '<img class="arch-media" src="' + e.image + '" alt="" draggable="false">' : "";
+    var img = e.image ? '<img class="arch-media" src="' + storyImg(e.image) + '" alt="" draggable="false">' : "";
     openRecord(
       '<div class="doc-header"><div class="doc-title">' + escapeHtml(e.title) + '</div>' +
       '<div class="doc-meta">' + meta + '</div></div>' +
@@ -1523,7 +1540,7 @@
   function showArchMediaDetail(m) {
     var mediaHtml = m.type === "video"
       ? '<video src="' + m.src + '" controls playsinline class="arch-media"></video>'
-      : '<img src="' + m.src + '" alt="" class="arch-media" draggable="false">';
+      : '<img src="' + storyImg(m.image) + '" alt="" class="arch-media" draggable="false">';
     openRecord(
       '<div class="doc-header"><div class="doc-title">' + escapeHtml(m.name) + '</div>' +
       '<div class="doc-meta"><span>' + escapeHtml(m.date || "") + '</span></div></div>' +
@@ -1579,43 +1596,26 @@
   }
 
   // --- Intro: story briefing -> crew setup -> game ---
-  var STORY_LINES = [
-    "INCOMING CONTRACT // COLONIAL RESOURCE AUTHORITY",
-    "",
-    "Survey cruiser T4-84 went dark three months ago.",
-    "No distress call. No escape pods. No beacon.",
-    "",
-    "The only transmission ever recovered arrived",
-    "forty-two minutes after the last check-in.",
-    "Audio destroyed. Nav unreadable.",
-    "Three words survived intact:",
-    "",
-    "IT TOOK US.",
-    "",
-    "You are bounty hunters. Underfunded. Expendable.",
-    "Recover whatever explains it. Survivors pay more.",
-    "",
-    "The cruiser is dead ahead — running, warm,",
-    "and still broadcasting:",
-    "",
-    "\"All clear. Come aboard. Party's still going.\"",
-  ];
 
   function startIntro() {
     var intro = document.getElementById("intro");
     var textEl = document.getElementById("intro-text");
     var contBtn = document.getElementById("intro-continue");
     intro.classList.remove("hidden");
+    var introImgEl = document.getElementById("intro-img");
+    var firstArch = (activeStory().archives || [])[0];
+    if (introImgEl && firstArch && firstArch.image) introImgEl.src = storyImg(firstArch.image);
     textEl.textContent = "";
     contBtn.classList.add("hidden");
 
+    var lines = activeStory().briefing || [];
     var i = 0;
     function typeStory() {
-      if (i >= STORY_LINES.length) {
+      if (i >= lines.length) {
         contBtn.classList.remove("hidden");
         return;
       }
-      var line = STORY_LINES[i];
+      var line = lines[i];
       textEl.textContent += line + "\n";
       i++;
       if (line !== "") SFX.tick();
