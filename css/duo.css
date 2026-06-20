@@ -735,3 +735,60 @@ body.panic-corrupt-hold #app { animation: corrupt-shift 0.12s steps(3) infinite;
 }
 .setup-card[data-setup="0"] .setup-name { color: #00ff9d; }
 .setup-card[data-setup="1"] .setup-name { color: #00d4ff; }
+
+/* ---- Crew setup: equipment choices ---- */
+.setup-identity {
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.setup-choice {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.choice-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+}
+.choice-opts { display: flex; gap: 6px; }
+.choice-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 9px 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-color);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  cursor: pointer;
+  border-radius: 3px;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.12s ease;
+}
+.choice-btn.selected {
+  color: var(--primary);
+  border-color: var(--primary-dim);
+  background: var(--primary-glow);
+}
+
+.setup-fixed {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 2px;
+}

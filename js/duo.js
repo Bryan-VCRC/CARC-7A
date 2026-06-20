@@ -12,33 +12,59 @@
   // --- Vital defaults ---
   const VITALS = { hp: 6, hpMax: 6, stress: 0, stressMax: 6 };
 
-  // --- Starting loadout (cloned per player) ---
-  const STARTER_TEMPLATES = [
-    {
+  // --- Loadout item templates (chosen during crew setup) ---
+  const ITEMS = {
+    revolver: {
       type: "weapon", name: "Revolver", icon: "icons/items/revolver.svg", quantity: 1,
-      description: "Six rounds, no frills. Loud enough to hear through a bulkhead.",
-      ammo: { current: 6, magCapacity: 6, spareMags: 2, magLabel: "Cylinder", spareLabel: "Speedloaders" },
+      description: "Six rounds, no frills. One spare speedloader. Loud enough to hear through a bulkhead.",
+      ammo: { current: 6, magCapacity: 6, spareMags: 1, magLabel: "Cylinder", spareLabel: "Speedloaders" },
       fireModes: ["semi"],
       stats: { "Damage": "1d10", "Range": "Medium", "Condition": "Worn" },
     },
-    {
-      type: "weapon", name: "Combat Knife", icon: "icons/items/knife.svg", quantity: 1,
-      description: "Standard issue. Works on anything that gets too close.",
-      stats: { "Damage": "1d10", "Range": "Adjacent", "Condition": "Sharp" },
+    chainsword: {
+      type: "weapon", name: "Chainsword", icon: "icons/items/knife.svg", quantity: 1,
+      description: "Revs hot, bites deep. Loud — and everything on this ship can hear it.",
+      stats: { "Damage": "2d10", "Range": "Adjacent", "Condition": "Hungry" },
     },
-    {
+    light: {
+      type: "armor", name: "Light Military Armor", icon: "icons/items/armor.svg", quantity: 1,
+      description: "Ceramic plating over a flex underlayer. Won't stop everything. Stops enough.",
+      stats: { "Armor Points": "2 AP", "Speed Penalty": "-1 Speed", "Condition": "Scuffed" },
+    },
+    leather: {
+      type: "armor", name: "Leather Jacket", icon: "icons/items/armor.svg", quantity: 1,
+      description: "Worn leather, a few old patches. Stops a little. Mostly attitude.",
+      stats: { "Armor Points": "1 AP", "Speed Penalty": "None", "Condition": "Broken in" },
+    },
+    flashlight: {
       type: "tool", name: "Flashlight", icon: "icons/items/flashlight.svg", quantity: 1,
       description: "High-beam, long battery. The dark is everywhere out here.",
       consumable: { current: 12, max: 12, unit: "hours", perUse: 1, verb: "DRAIN", useLabel: "USE 1 HOUR", depletedMsg: "BATTERY DEAD" },
       stats: { "Beam": "High intensity", "Condition": "Functional" },
     },
-    {
+    rope: {
+      type: "tool", name: "Nylon Rope (20 ft)", icon: "icons/items/paracord.svg", quantity: 1,
+      description: "Twenty feet of nylon line. You'll find a use for it.",
+      stats: { "Length": "20 feet", "Rating": "Strong", "Condition": "Good" },
+    },
+    firstaid: {
       type: "medical", name: "First Aid Kit", icon: "icons/items/firstaid.svg", quantity: 1,
       description: "Bandages, sealant foam, a basic stimshot. Buys time.",
-      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL 1d5", depletedMsg: "KIT EMPTY" },
-      stats: { "Heals": "1d5 Health per use", "Contents": "Bandages, foam sealant, stimshot" },
+      consumable: { current: 3, max: 3, unit: "uses", perUse: 1, verb: "APPLY", useLabel: "USE — HEAL d5", depletedMsg: "KIT EMPTY" },
+      stats: { "Heals": "Roll d5 — GM applies", "Contents": "Bandages, foam sealant, stimshot" },
     },
-  ];
+  };
+
+  // Build the inventory from a player's loadout choices + the fixed kit.
+  function buildLoadout(lo) {
+    lo = lo || {};
+    var keys = [
+      lo.weapon === "chainsword" ? "chainsword" : "revolver",
+      lo.armor === "leather" ? "leather" : "light",
+      "flashlight", "rope", "firstaid",
+    ];
+    return keys.map(function (k) { var it = clone(ITEMS[k]); it.id = genId(); return it; });
+  }
 
   const ICON_FOR_TYPE = {
     weapon: "icons/items/revolver.svg",
@@ -56,16 +82,9 @@
     return "it-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   }
 
-  function starterKit() {
-    return STARTER_TEMPLATES.map(function (t) {
-      var item = clone(t);
-      item.id = genId();
-      return item;
-    });
-  }
-
   function makePlayer() {
-    return { name: "", portrait: null, hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax, inventory: starterKit() };
+    var loadout = { weapon: "revolver", armor: "light" };
+    return { name: "", portrait: null, loadout: loadout, hp: VITALS.hp, hpMax: VITALS.hpMax, stress: VITALS.stress, stressMax: VITALS.stressMax, inventory: buildLoadout(loadout) };
   }
 
   // Portrait list (URLs), loaded from the server's /api/portraits endpoint.
@@ -77,6 +96,7 @@
     openItem: [null, null],     // id of the item whose detail is open, per column
     notes: [],                  // field notes recovered (revealed by the GM)
     allHereDone: false,         // the "WE ARE ALL HERE" set-piece has played once
+    started: false,             // crew setup completed -> skip the intro on reload
     players: [makePlayer(), makePlayer()],
   };
 
@@ -91,7 +111,7 @@
 
   function save() {
     try {
-      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, allHereDone: STATE.allHereDone, players: STATE.players }));
+      localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 3, view: STATE.view, notes: STATE.notes, allHereDone: STATE.allHereDone, started: STATE.started, players: STATE.players }));
     } catch (e) { /* storage unavailable — fail silently */ }
   }
 
@@ -105,6 +125,7 @@
         const p = STATE.players[i];
         if (typeof saved.name === "string") p.name = saved.name;
         if (typeof saved.portrait === "string") p.portrait = saved.portrait;
+        if (saved.loadout && typeof saved.loadout === "object") p.loadout = saved.loadout;
         ["hp", "hpMax", "stress", "stressMax"].forEach(function (k) {
           if (typeof saved[k] === "number") p[k] = saved[k];
         });
@@ -117,6 +138,7 @@
       });
       if (Array.isArray(data.notes)) STATE.notes = data.notes;
       if (typeof data.allHereDone === "boolean") STATE.allHereDone = data.allHereDone;
+      if (typeof data.started === "boolean") STATE.started = data.started;
       // Per-player view (older saves stored a single string)
       if (Array.isArray(data.view)) {
         data.view.slice(0, 2).forEach(function (v, i) {
@@ -172,7 +194,9 @@
           bootScreen.classList.add("done");
           setTimeout(function () { bootScreen.remove(); }, 800);
           initApp();    // builds the game (kept hidden)
-          startIntro(); // story briefing -> crew setup -> beginGame()
+          // Returning to a set-up crew skips straight in; a fresh start gets the intro.
+          if (STATE.started) beginGame();
+          else startIntro();
         }, 450);
         return;
       }
@@ -1055,6 +1079,7 @@
       STATE.view = ["vitals", "vitals"];
       STATE.notes = []; // recovered field notes clear back to the starter journal
       STATE.allHereDone = false; // the set-piece can play again next game
+      STATE.started = false; // next load runs the intro + crew setup again
       SFX.bootDone();
       closeRecord();
       renderArchJournalList();
@@ -1317,7 +1342,8 @@
     var p = STATE.players[idx];
     document.getElementById("identity-name").value = p.name || "";
     pcIndex = p.portrait ? Math.max(0, PORTRAITS.indexOf(p.portrait)) : 0;
-    renderCarousel(); // preview only — opening doesn't change the saved portrait
+    renderCarousel();
+    applyPortrait(); // commit the shown portrait so the first image counts without navigating
     SFX.select();
     document.getElementById("identity-modal").classList.remove("hidden");
   }
@@ -1550,11 +1576,18 @@
     "Survey cruiser T4-84 went dark three months ago.",
     "No distress call. No escape pods. No beacon.",
     "",
+    "The only transmission ever recovered arrived",
+    "forty-two minutes after the last check-in.",
+    "Audio destroyed. Nav unreadable.",
+    "Three words survived intact:",
+    "",
+    "IT TOOK US.",
+    "",
     "You are bounty hunters. Underfunded. Expendable.",
     "Recover whatever explains it. Survivors pay more.",
     "",
     "The cruiser is dead ahead — running, warm,",
-    "and still broadcasting.",
+    "and still broadcasting:",
     "",
     "\"All clear. Come aboard. Party's still going.\"",
   ];
@@ -1585,17 +1618,68 @@
       SFX.select();
       document.getElementById("intro-story").classList.add("hidden");
       document.getElementById("intro-setup").classList.remove("hidden");
-      renderIdentity(0);
-      renderIdentity(1);
+      buildSetupCards();
     }, { once: true });
 
-    document.querySelectorAll(".setup-card").forEach(function (card) {
-      card.addEventListener("click", function () { openIdentity(Number(card.dataset.setup)); });
-    });
     document.getElementById("setup-begin").addEventListener("click", beginGame);
   }
 
+  // --- Crew setup cards (name + portrait + equipment choices) ---
+  function choiceRow(idx, slot, label, opts) {
+    var btns = opts.map(function (o) {
+      return '<button class="choice-btn" data-player="' + idx + '" data-slot="' + slot + '" data-val="' + o[0] + '">' + o[1] + '</button>';
+    }).join("");
+    return '<div class="setup-choice"><span class="choice-label">' + label + '</span><div class="choice-opts">' + btns + '</div></div>';
+  }
+
+  function setupCardHTML(idx) {
+    return '' +
+      '<div class="setup-card" data-setup="' + idx + '">' +
+      '<button class="setup-identity" data-setup="' + idx + '">' +
+      '<div class="setup-portrait" data-player="' + idx + '">' +
+      '<img id="setup-img-' + idx + '" class="setup-img" alt="" draggable="false" hidden>' +
+      '<span id="setup-ph-' + idx + '" class="setup-ph">TAP<br>TO SET</span>' +
+      '</div>' +
+      '<div class="setup-name" id="setup-name-' + idx + '">PLAYER ' + (idx + 1) + '</div>' +
+      '</button>' +
+      choiceRow(idx, "weapon", "WEAPON", [["chainsword", "CHAINSWORD"], ["revolver", "REVOLVER"]]) +
+      choiceRow(idx, "armor", "ARMOR", [["light", "LIGHT ARMOR"], ["leather", "LEATHER JACKET"]]) +
+      '<div class="setup-fixed">Everyone also carries: Flashlight &middot; 20ft Rope &middot; First Aid Kit</div>' +
+      '</div>';
+  }
+
+  function buildSetupCards() {
+    var wrap = document.getElementById("setup-cards");
+    wrap.innerHTML = setupCardHTML(0) + setupCardHTML(1);
+    [0, 1].forEach(function (idx) {
+      wrap.querySelector('.setup-identity[data-setup="' + idx + '"]').addEventListener("click", function () { openIdentity(idx); });
+      wrap.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
+        btn.addEventListener("click", function () { setLoadout(idx, btn.dataset.slot, btn.dataset.val); });
+      });
+      renderIdentity(idx);
+      renderSetupChoices(idx);
+    });
+  }
+
+  function setLoadout(idx, slot, val) {
+    STATE.players[idx].loadout[slot] = val;
+    STATE.players[idx].inventory = buildLoadout(STATE.players[idx].loadout);
+    renderInventory(idx);
+    renderSetupChoices(idx);
+    SFX.select();
+    save();
+  }
+
+  function renderSetupChoices(idx) {
+    var lo = STATE.players[idx].loadout || {};
+    document.querySelectorAll('.choice-btn[data-player="' + idx + '"]').forEach(function (btn) {
+      btn.classList.toggle("selected", lo[btn.dataset.slot] === btn.dataset.val);
+    });
+  }
+
   function beginGame() {
+    STATE.started = true;
+    save();
     SFX.bootDone();
     document.getElementById("intro").classList.add("hidden");
     document.getElementById("app").classList.remove("hidden");
