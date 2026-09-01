@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="color-scheme" content="light dark">
+<title>Dead Belt Belter Sheet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --ground:#E4E4DC; --panel:#F7F7F1; --field:#FFFFFF;
+  --ink:#15170F; --muted:#5C6153; --rule:#C6C7BB; --rule-hard:#15170F;
+  --hazard:#E5B400; --hazard-ink:#15170F; --oxide:#BE3A22;
+  --slot:#15170F; --slot-empty:#9DA093; --shade:rgba(21,23,15,.07);
+  --shadow:0 1px 0 rgba(21,23,15,.16);
+  --sp:clamp(10px,2.6vw,16px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0F1210; --panel:#181C17; --field:#0B0E0B;
+    --ink:#E2E5DA; --muted:#8A9080; --rule:#2E332B; --rule-hard:#414737;
+    --hazard:#F2C21B; --hazard-ink:#0F1210; --oxide:#DB4F33;
+    --slot:#D6DACC; --slot-empty:#4B5147; --shade:rgba(226,229,218,.05);
+    --shadow:0 1px 0 rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1210; --panel:#181C17; --field:#0B0E0B;
+  --ink:#E2E5DA; --muted:#8A9080; --rule:#2E332B; --rule-hard:#414737;
+  --hazard:#F2C21B; --hazard-ink:#0F1210; --oxide:#DB4F33;
+  --slot:#D6DACC; --slot-empty:#4B5147; --shade:rgba(226,229,218,.05);
+  --shadow:0 1px 0 rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--ground); color:var(--ink);
+  font-family:"IBM Plex Sans Condensed","Helvetica Neue",Arial,sans-serif;
+  font-size:15px; line-height:1.35;
+  -webkit-text-size-adjust:100%;
+  padding-bottom:env(safe-area-inset-bottom);
+}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+:focus-visible{outline:2px solid var(--hazard);outline-offset:2px}
+.wrap{max-width:560px;margin:0 auto;padding:0 var(--sp) 56px}
+
+/* ---------- telemetry bar ---------- */
+.hud{
+  position:sticky; top:0; z-index:20; background:var(--ground);
+  border-bottom:2px solid var(--rule-hard);
+  padding:8px var(--sp) 0;
+}
+.hud-in{max-width:560px;margin:0 auto}
+.hud-top{display:flex;align-items:baseline;gap:10px;justify-content:space-between}
+.mark{
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;
+  font-size:22px;letter-spacing:.02em;line-height:1;text-transform:uppercase;
+}
+.mark em{font-style:normal;color:var(--muted)}
+.tagline{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:8px;letter-spacing:.12em;line-height:1.3;
+  text-transform:uppercase;color:var(--muted);text-align:right;
+}
+.gasbar{display:flex;align-items:center;gap:6px;margin:5px 0 6px}
+.gasbar .lbl{
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;font-size:17px;
+  letter-spacing:.06em;background:var(--hazard);color:var(--hazard-ink);
+  padding:1px 7px 0;line-height:1.3;
+}
+.gaspips{display:flex;gap:4px;flex:1}
+.gaspip{
+  flex:1;height:23px;border:2px solid var(--rule-hard);background:transparent;
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:13px;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .12s ease,color .12s ease;
+}
+.gaspip[data-on="1"]{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
+.gaspip[data-on="1"][data-low="1"]{background:var(--oxide);border-color:var(--oxide);color:#fff}
+.gaspip[data-on="0"]{color:var(--slot-empty)}
+.readout{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--rule);
+  border:1px solid var(--rule);margin-bottom:6px;
+}
+.readout div{background:var(--ground);padding:2px 4px 3px;text-align:center}
+.readout dt{
+  font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);margin:0;
+}
+.readout dd{
+  margin:0;font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:14px;
+  font-variant-numeric:tabular-nums;line-height:1.15;
+}
+.readout dd.warn{color:var(--oxide)}
+.tabs{display:flex;gap:0;overflow-x:auto;scrollbar-width:none;margin:0 calc(var(--sp)*-1);padding:0 var(--sp)}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  flex:1 1 auto;
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:700;font-size:16px;
+  letter-spacing:.04em;text-transform:uppercase;padding:4px 6px 3px;white-space:nowrap;
+  border-bottom:3px solid transparent;color:var(--muted);
+}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--hazard)}
+@media (max-width:359px){.tab{font-size:14px;padding:4px 4px 3px}}
+
+/* ---------- panels ---------- */
+.pane{padding-top:var(--sp);display:none}
+.pane.on{display:block}
+.panel{
+  border:2px solid var(--rule-hard);background:var(--panel);
+  padding:10px 12px 12px;margin-bottom:var(--sp);
+}
+.panel > h2{
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:800;
+  font-size:23px;letter-spacing:.03em;text-transform:uppercase;text-align:center;
+  margin:0 auto 2px;line-height:1;width:max-content;
+  border-bottom:3px solid var(--ink);padding-bottom:3px;
+}
+.sub{
+  font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);text-align:center;margin:5px 0 10px;
+}
+.rowlabel{
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:700;font-size:19px;
+  letter-spacing:.04em;text-transform:uppercase;line-height:1;
+}
+.cost{font-family:"IBM Plex Mono",monospace;font-size:10px;font-weight:500;color:var(--muted)}
+
+/* ---------- slot glyphs ---------- */
+.slot{
+  -webkit-tap-highlight-color:transparent;
+  display:inline-flex;align-items:center;justify-content:center;
+  width:var(--sz,30px);height:var(--sz,30px);color:var(--slot-empty);
+}
+.slot svg{width:100%;height:100%;display:block}
+.slot[data-on="1"]{color:var(--slot)}
+.slot[data-on="1"]{--fo:1}
+.slot.tone-haz[data-on="1"]{color:var(--hazard)}
+.slot.tone-ox[data-on="1"]{color:var(--oxide)}
+.slot:active{transform:scale(.9)}
+@media (prefers-reduced-motion:reduce){.slot,.slot:active,.gaspip{transition:none;transform:none}}
+.track{display:flex;flex-wrap:wrap;gap:3px}
+.grid5{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;justify-items:center}
+
+/* ---------- kit ---------- */
+.kitrow{margin-bottom:12px}
+.kithead{display:flex;align-items:baseline;gap:6px;justify-content:center;margin-bottom:4px}
+.kitslots{display:flex;gap:4px;justify-content:center;flex-wrap:wrap}
+.kitcol{display:flex;flex-direction:column;align-items:center;gap:2px}
+.kitcol .own{background:var(--shade);padding:2px;border-radius:50%}
+.kitcol[data-owned="0"] > .slot{opacity:.3}
+.voidrat{
+  display:flex;align-items:center;gap:5px;padding-left:8px;margin-left:4px;
+  border-left:2px solid var(--rule-hard);
+}
+.voidrat span{
+  writing-mode:vertical-rl;transform:rotate(180deg);
+  font-family:"IBM Plex Mono",monospace;font-size:8px;letter-spacing:.1em;color:var(--muted);
+}
+
+/* ---------- ship ---------- */
+.ship{border-top:1px solid var(--rule);padding-top:8px;margin-top:8px}
+.shiphead{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.shipsel{
+  font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;
+  border:1px solid var(--rule-hard);padding:2px 7px;text-transform:uppercase;color:var(--muted);
+}
+.ship[data-active="1"] .shipsel{background:var(--hazard);color:var(--hazard-ink);border-color:var(--hazard)}
+.ship[data-active="1"] .rowlabel{color:var(--ink)}
+.ship[data-active="0"] .rowlabel{color:var(--muted)}
+.bays{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;justify-items:center}
+
+/* ---------- spares ---------- */
+.bankrow{display:flex;align-items:center;gap:6px;margin-bottom:7px}
+.bankrow .rowlabel{width:50px;flex:none;font-size:17px}
+.segs{display:flex;gap:6px;flex:1}
+.seg{display:flex;gap:2px;padding:3px 4px;border:1px dashed var(--rule);flex:1 1 0;min-width:0;justify-content:center}
+.seg .slot{flex:1 1 0;min-width:0;width:auto;height:auto;aspect-ratio:1/1;max-width:26px}
+.seg[data-locked="1"]{opacity:.42}
+.seghead{display:flex;gap:6px;padding-left:56px;margin-bottom:3px}
+.seghead span{
+  flex:1;text-align:center;font-family:"IBM Plex Mono",monospace;font-size:8.5px;
+  letter-spacing:.1em;color:var(--muted);
+}
+
+/* ---------- list rows (upgrades/tools/market) ---------- */
+.lrow{
+  display:flex;align-items:center;gap:8px;padding:5px 0;
+  border-bottom:1px solid var(--rule);
+}
+.lrow:last-child{border-bottom:0}
+.lrow .name{flex:1;min-width:0}
+.lrow .name small{display:block;font-family:"IBM Plex Mono",monospace;font-size:8.5px;letter-spacing:.08em;color:var(--muted)}
+.boxset{display:flex;gap:3px;align-items:center}
+.colhead{display:flex;gap:8px;justify-content:flex-end;margin-bottom:2px}
+.colhead span{
+  width:56px;text-align:center;font-family:"IBM Plex Mono",monospace;font-size:8.5px;
+  letter-spacing:.1em;color:var(--muted);
+}
+.cell{width:56px;display:flex;justify-content:center;align-items:center;gap:2px}
+
+/* ---------- fields ---------- */
+.field{
+  width:100%;background:var(--field);color:var(--ink);
+  border:2px solid var(--rule-hard);padding:9px 10px;
+  font-family:"IBM Plex Mono",monospace;font-size:15px;letter-spacing:.03em;
+}
+textarea.field{min-height:230px;resize:vertical;line-height:1.5;font-size:13.5px}
+
+/* ---------- salvage procedure ---------- */
+ol.proc{margin:0;padding-left:20px;font-size:14px}
+ol.proc > li{margin-bottom:7px}
+ol.proc b{font-weight:600}
+.opt{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);
+  border-left:3px solid var(--hazard);padding-left:8px;margin-bottom:10px;
+}
+.moves{list-style:none;margin:4px 0 0;padding:0;font-size:13px}
+.moves li{padding:2px 0 2px 0}
+.moves b{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:600;
+  letter-spacing:.04em;color:var(--ink);background:var(--shade);padding:1px 5px;margin-right:4px;
+}
+.dice{display:flex;gap:6px;margin-bottom:10px}
+.dice button{
+  flex:1;border:2px solid var(--rule-hard);padding:8px 4px;
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:700;font-size:17px;
+  letter-spacing:.04em;text-transform:uppercase;background:var(--panel);
+}
+.dice button:active{background:var(--hazard);color:var(--hazard-ink)}
+.result{
+  border:2px solid var(--rule-hard);background:var(--field);padding:10px;text-align:center;
+  min-height:76px;display:flex;flex-direction:column;justify-content:center;gap:3px;
+}
+.pips{
+  font-family:"IBM Plex Mono",monospace;font-weight:600;font-size:34px;
+  font-variant-numeric:tabular-nums;letter-spacing:.06em;line-height:1;
+}
+.pips .dim{color:var(--slot-empty)}
+.verdict{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.verdict.hit{color:var(--hazard)}
+.verdict.miss{color:var(--oxide)}
+.rolling .pips{animation:tumble .28s steps(4)}
+@keyframes tumble{from{opacity:.3;letter-spacing:.3em}to{opacity:1;letter-spacing:.06em}}
+@media (prefers-reduced-motion:reduce){.rolling .pips{animation:none}}
+.danger{
+  width:100%;border:2px solid var(--oxide);color:var(--oxide);padding:9px;
+  font-family:"Big Shoulders Display",Impact,sans-serif;font-weight:700;font-size:18px;
+  letter-spacing:.05em;text-transform:uppercase;background:transparent;
+}
+.foot{font-family:"IBM Plex Mono",monospace;font-size:9px;letter-spacing:.08em;color:var(--muted);text-align:center;padding:4px 0 0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" aria-hidden="true" style="position:absolute">
+  <defs>
+    <symbol id="g-bit" viewBox="0 0 24 24">
+      <path d="M2 8V2h6M22 8V2h-6M2 16v6h6M22 16v6h-6" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect fill-opacity="var(--fo,0)" x="6" y="6" width="12" height="12" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-crate" viewBox="0 0 24 24">
+      <path d="M2 3v19h20V3" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect fill-opacity="var(--fo,0)" x="6" y="8" width="12" height="10" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-box" viewBox="0 0 24 24">
+      <rect x="2.5" y="2.5" width="19" height="19" fill="none" stroke="currentColor" stroke-width="3"/>
+      <rect fill-opacity="var(--fo,0)" x="7" y="7" width="10" height="10" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-ring" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle fill-opacity="var(--fo,0)" cx="12" cy="12" r="4.5" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-diamond" viewBox="0 0 24 24">
+      <path d="M12 2 22 12 12 22 2 12Z" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path fill-opacity="var(--fo,0)" d="M12 6 18 12 12 18 6 12Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-heart" viewBox="0 0 24 24">
+      <path d="M12 21C6 16.5 2 13.2 2 8.9 2 5.6 4.5 3 7.6 3c1.8 0 3.4.9 4.4 2.3C13 3.9 14.6 3 16.4 3 19.5 3 22 5.6 22 8.9c0 4.3-4 7.6-10 12.1Z" fill="none" stroke="currentColor" stroke-width="2.2"/>
+      <path fill-opacity="var(--fo,0)" d="M12 18.6C7.4 15 4.4 12.4 4.4 9.1c0-2.1 1.5-3.7 3.4-3.7 1.5 0 2.8 1 3.4 2.4h1.6c.6-1.4 1.9-2.4 3.4-2.4 1.9 0 3.4 1.6 3.4 3.7 0 3.3-3 5.9-7.6 9.5Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="g-glow" viewBox="0 0 24 24">
+      <path d="M11 4C7 4 4 7.6 4 12s3 8 7 8Z" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"/>
+      <path fill-opacity="var(--fo,0)" d="M10 6.6C7.6 7 6 9.2 6 12s1.6 5 4 5.4Z" fill="currentColor"/>
+      <path d="M13 5.2 20 3M13.6 9 21 8M13.6 15 21 16M13 18.8 20 21M14 12h7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="hud">
+  <div class="hud-in">
+    <div class="hud-top">
+      <div class="mark">Dead<em>Belt</em></div>
+      <div class="tagline">You're alone<br>out here</div>
+    </div>
+    <div class="gasbar">
+      <span class="lbl">Gas</span>
+      <div class="gaspips" id="gasTrack" role="group" aria-label="Gas remaining"></div>
+    </div>
+    <dl class="readout">
+      <div><dt>Cred</dt><dd id="roCred">0</dd></div>
+      <div><dt>Load</dt><dd id="roLoad">0</dd></div>
+      <div><dt>Upkeep due</dt><dd id="roUp">0</dd></div>
+      <div><dt>Debt</dt><dd id="roDebt">0</dd></div>
+    </dl>
+    <nav class="tabs" role="tablist" id="tabs"></nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- ================= STATUS ================= -->
+<section class="pane on" id="pane-status" role="tabpanel" aria-label="Status">
+  <div class="panel">
+    <h2>Belter ID</h2>
+    <p class="sub">Name / handle / registry number</p>
+    <input class="field" id="belterId" placeholder="Who's out here?" autocomplete="off">
+  </div>
+
+  <div class="panel">
+    <h2>Debt</h2>
+    <p class="sub">1 debt = [10 cred] &middot; tenth marker forecloses you</p>
+    <div class="grid5" id="tDebt"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Investments</h2>
+    <p class="sub">1 investment = [5 cred] = upkeep &minus;1</p>
+    <div class="grid5" id="tInv"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Cred</h2>
+    <p class="sub">Squares [1] &middot; diamonds [10]</p>
+    <div class="grid5" id="tCredOnes" style="margin-bottom:6px"></div>
+    <div class="grid5" id="tCredTens"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Upkeep</h2>
+    <p class="sub">Squares [1] &middot; diamond [10] &middot; owed at dock</p>
+    <div class="grid5" id="tUpOnes" style="margin-bottom:6px"></div>
+    <div class="grid5" id="tUpTens"></div>
+  </div>
+</section>
+
+<!-- ================= KIT ================= -->
+<section class="pane" id="pane-kit" role="tabpanel" aria-label="Personal kit">
+  <div class="panel">
+    <h2>Personal Kit</h2>
+    <p class="sub">Store spare bits in the spares bank &middot; store spare salvage in shuttle or ship<br>[cost] per &#9711; kit slot &mdash; tap the ring to buy the slot, tap above to fill it</p>
+    <div id="kitRows"></div>
+  </div>
+</section>
+
+<!-- ================= SHIP ================= -->
+<section class="pane" id="pane-ship" role="tabpanel" aria-label="Ship">
+  <div class="panel">
+    <h2>Ship &mdash; Cargo Bay</h2>
+    <p class="sub">Trade-in value = cargo bay load size &middot; [D#] debt &middot; [U#] upkeep</p>
+    <div id="ships"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Spares Bank</h2>
+    <p class="sub">1 cred = 3 spare bits (O2, GR, GE)</p>
+    <div class="seghead"><span>Stock</span><span>Exp 1</span><span>Exp 2</span></div>
+    <div id="bank"></div>
+    <p class="sub" style="margin:8px 0 0" id="bankTotal"></p>
+  </div>
+</section>
+
+<!-- ================= YARD ================= -->
+<section class="pane" id="pane-yard" role="tabpanel" aria-label="Yard">
+  <div class="panel">
+    <h2>Upgrades</h2>
+    <p class="sub">[cost] to own / upkeep</p>
+    <div class="colhead"><span>Own</span><span>Active</span></div>
+    <div id="upgrades"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Tools</h2>
+    <p class="sub">[cost] per item</p>
+    <div id="tools"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Black Market</h2>
+    <p class="sub">[cost] to own / upkeep</p>
+    <div class="colhead"><span>Own</span><span>Upkeep</span></div>
+    <div id="market"></div>
+  </div>
+
+  <div class="panel">
+    <h2>Wreck Registries</h2>
+    <p class="sub">Stock &mdash; [T1] 1-4 &middot; [T2] 5 &middot; [T3] 6</p>
+    <div class="colhead"><span>Own</span><span>Active</span></div>
+    <div id="registries"></div>
+  </div>
+</section>
+
+<!-- ================= RUN ================= -->
+<section class="pane" id="pane-run" role="tabpanel" aria-label="Salvage run">
+  <div class="panel">
+    <h2>Dice</h2>
+    <p class="sub">Gas checks, oracle rolls, [Gear] re-reads</p>
+    <div class="dice">
+      <button type="button" data-roll="1">1d6</button>
+      <button type="button" data-roll="2">2d6 [Gear]</button>
+    </div>
+    <div class="result" id="rollOut">
+      <div class="pips"><span class="dim">&mdash;</span></div>
+      <div class="verdict">Awaiting roll</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>Salvage</h2>
+    <p class="opt">(Opt) Use Glow to check suit of adjacent Module.</p>
+    <ol class="proc">
+      <li>Enter (flip) a Module. Roll 1d6 to check <b>Gas</b>.</li>
+      <li>Respond to Oracle prompt.
+        <ul class="moves">
+          <li><b>Grit</b>Turn failed roll (1-3) into weak hit (4/5).</li>
+          <li><b>Grit's End</b>Generate a Threat.</li>
+          <li><b>Gear</b>Roll 2d6 and choose better outcome.</li>
+          <li><b>Push Luck</b>Try to improve Supply prompts.</li>
+        </ul>
+      </li>
+      <li>Repeat 1 &amp; 2 until you max out your <b>Load</b> in your Personal Kit, or get anxious about Gas.</li>
+      <li><b>[Shuttle]</b> Stash Load and carry on.
+        <ul class="moves">
+          <li><b>Airlock</b>Drop Load, restock Supply. Roll 1d6 for Airlock Move.</li>
+        </ul>
+      </li>
+      <li>Still standing? Swap Oracles and head back in.</li>
+    </ol>
+  </div>
+</section>
+
+<!-- ================= LOG ================= -->
+<section class="pane" id="pane-log" role="tabpanel" aria-label="Notes">
+  <div class="panel">
+    <h2>Notes</h2>
+    <p class="sub">Wrecks, threats, debts owed, names of the dead</p>
+    <textarea class="field" id="notes" placeholder="Module 4: hull breach, void rat nest. Owe Vasquez 2 cred."></textarea>
+  </div>
+  <div class="panel">
+    <h2>Sheet</h2>
+    <p class="sub">Saved to this device only</p>
+    <button class="danger" type="button" id="wipe">Scuttle this sheet</button>
+  </div>
+  <p class="foot">Dead Belt &mdash; unofficial play aid</p>
+</section>
+
+</main>
+
+<script>
+"use strict";
+var KEY = "deadbelt.sheet.v1";
+
+var SHIPS = [
+  {id:"shuttle",  name:"Shuttle",   slots:5,  debt:0, up:0},
+  {id:"kildeer",  name:"Kildeer",   slots:10, debt:3, up:1},
+  {id:"jackdaw",  name:"Jackdaw",   slots:10, debt:5, up:2},
+  {id:"albatross",name:"Albatross", slots:10, debt:7, up:3}
+];
+var KIT = [
+  {id:"grit", name:"Grit", cost:3, n:7, glyph:"g-bit",   tag:"[T]"},
+  {id:"gear", name:"Gear", cost:2, n:7, glyph:"g-bit"},
+  {id:"glow", name:"Glow", cost:3, n:5, glyph:"g-glow", rat:true},
+  {id:"load", name:"Load", cost:2, n:8, glyph:"g-crate"}
+];
+var BANK = [{id:"gas",name:"Gas"},{id:"grit",name:"Grit"},{id:"gear",name:"Gear"}];
+var UPGRADES = [
+  {id:"scanner1", name:"Scanner",         own:4,  up:1},
+  {id:"scanner2", name:"Scanner",         own:4,  up:1, dup:true},
+  {id:"exp1",     name:"Spares Bank Exp1",own:5,  up:1},
+  {id:"exp2",     name:"Spares Bank Exp2",own:8,  up:1},
+  {id:"shuttle",  name:"Shuttle",         own:10, up:1},
+  {id:"comms",    name:"Improved Comms",  own:4,  up:1, note:"[co-op]"}
+];
+var TOOLS = [
+  {id:"crybaby",     name:"Crybaby",         cost:3},
+  {id:"override",    name:"Override Key",    cost:2},
+  {id:"deadman",     name:"Deadman Cyl.",    cost:2},
+  {id:"scrubber",    name:"Emerg. Scrubber", cost:4},
+  {id:"deepbreather",name:"Deepbreather",    cost:6},
+  {id:"egress",      name:"Egress Kit",      cost:5}
+];
+var MARKET = [
+  {id:"dartgun",   name:"BF Dart Gun",  own:6, up:2, ammo:3},
+  {id:"crackerjack",name:"Crackerjack", own:6, up:1}
+];
+var REGISTRIES = [
+  {id:"wreck",    name:"Wreck Registry",   own:8, up:1, note:"[T1] 1-2 &middot; [T2] 3-4 &middot; [T3] 5-6"},
+  {id:"broadpass",name:"Broadpass Sens.",  own:8, up:1, note:"[T1] 1 &middot; [T2] 2-3 &middot; [T3] 4-6"},
+  {id:"bond",     name:"Salvage Bond",     own:8, up:2, note:"[T2] 1 &middot; [T3] 2-3 &middot; [T4] 4-6 &middot; &#9711;T3"}
+];
+
+function zeros(n){ var a=[],i; for(i=0;i<n;i++){a.push(0);} return a; }
+function blank(){
+  var s = {
+    id:"", notes:"", gas:6, debt:0, inv:0,
+    credOnes:0, credTens:0, upOnes:0, upTens:0,
+    ship:"kildeer", cargo:{}, bank:{}, kit:{},
+    up:{}, tools:{}, market:{}, ammo:zeros(3), reg:{}
+  };
+  SHIPS.forEach(function(sh){ s.cargo[sh.id] = zeros(sh.slots); });
+  BANK.forEach(function(b){ s.bank[b.id] = zeros(9); });
+  KIT.forEach(function(k){
+    var n = k.n + (k.rat ? 1 : 0);
+    s.kit[k.id] = {own:zeros(n), fill:zeros(n)};
+  });
+  UPGRADES.forEach(function(u){ s.up[u.id] = {own:0, active:0}; });
+  TOOLS.forEach(function(t){ s.tools[t.id] = zeros(4); });
+  MARKET.forEach(function(m){ s.market[m.id] = 0; });
+  REGISTRIES.forEach(function(r){ s.reg[r.id] = {own:0, active:0}; });
+  return s;
+}
+
+var S = blank();
+try {
+  var raw = localStorage.getItem(KEY);
+  if (raw) {
+    var loaded = JSON.parse(raw);
+    Object.keys(loaded).forEach(function(k){ if (k in S) { S[k] = loaded[k]; } });
+  }
+} catch (e) { /* private mode, blocked storage: run from a fresh sheet */ }
+
+var saveTimer = null;
+function flush(){
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {}
+}
+function save(){
+  if (saveTimer) { return; }
+  saveTimer = setTimeout(flush, 120);
+}
+window.addEventListener("pagehide", flush);
+document.addEventListener("visibilitychange", function(){
+  if (document.visibilityState === "hidden") { flush(); }
+});
+
+/* ---------- glyph helpers ---------- */
+function slot(glyph, on, attrs, tone, size){
+  var a = "", k;
+  for (k in attrs) { a += ' data-' + k + '="' + attrs[k] + '"'; }
+  return '<button type="button" class="slot' + (tone ? ' tone-' + tone : '') + '"' +
+    (size ? ' style="--sz:' + size + 'px"' : '') +
+    ' data-on="' + (on ? 1 : 0) + '" aria-pressed="' + (on ? "true" : "false") + '"' + a + '>' +
+    '<svg><use href="#' + glyph + '"/></svg></button>';
+}
+function count(arr){ return arr.reduce(function(a,b){ return a + b; }, 0); }
+function fillTo(arr, i){
+  var already = arr[i] === 1 && (i + 1 >= arr.length || arr[i+1] === 0);
+  var j;
+  for (j = 0; j < arr.length; j++) { arr[j] = (!already && j <= i) ? 1 : 0; }
+}
+
+/* ---------- renderers ---------- */
+function renderGas(){
+  var html = "", i;
+  for (i = 6; i >= 1; i--) {
+    var on = S.gas >= i;
+    html += '<button type="button" class="gaspip" data-gas="' + i + '" data-on="' + (on ? 1 : 0) +
+      '" data-low="' + (on && S.gas <= 2 ? 1 : 0) + '" aria-label="Gas ' + i + '">' + i + '</button>';
+  }
+  document.getElementById("gasTrack").innerHTML = html;
+}
+
+function renderCounter(el, n, key, glyph, tone, hot){
+  var html = "", i;
+  for (i = 0; i < n; i++) {
+    var t = (hot === i && S[key] > i) ? tone : null;
+    html += slot(glyph, S[key] > i, {ctr:key, i:i}, t, 34);
+  }
+  document.getElementById(el).innerHTML = html;
+}
+
+function renderStatus(){
+  renderCounter("tDebt", 10, "debt", "g-diamond", "ox", 9);
+  renderCounter("tInv", 10, "inv", "g-heart", "haz", 9);
+  renderCounter("tCredOnes", 10, "credOnes", "g-box");
+  renderCounter("tCredTens", 5, "credTens", "g-diamond");
+  renderCounter("tUpOnes", 9, "upOnes", "g-box");
+  renderCounter("tUpTens", 1, "upTens", "g-diamond");
+}
+
+function renderKit(){
+  var html = "";
+  KIT.forEach(function(k){
+    var st = S.kit[k.id], i, cols = "";
+    for (i = 0; i < k.n; i++) {
+      cols += '<div class="kitcol" data-owned="' + st.own[i] + '">' +
+        slot(k.glyph, st.fill[i], {kit:k.id, i:i, part:"fill"}, null, 28) +
+        '<span class="own">' + slot("g-ring", st.own[i], {kit:k.id, i:i, part:"own"}, null, 20) + '</span>' +
+        '</div>';
+    }
+    if (k.rat) {
+      var r = k.n;
+      cols += '<div class="voidrat"><span>[Void Rat]</span>' +
+        '<div class="kitcol" data-owned="' + st.own[r] + '">' +
+        slot(k.glyph, st.fill[r], {kit:k.id, i:r, part:"fill"}, null, 28) +
+        '<span class="own">' + slot("g-ring", st.own[r], {kit:k.id, i:r, part:"own"}, null, 20) + '</span>' +
+        '</div></div>';
+    }
+    html += '<div class="kitrow"><div class="kithead"><span class="rowlabel">' + k.name +
+      '</span><span class="cost">[' + k.cost + ']</span>' +
+      (k.tag ? '<span class="cost">' + k.tag + '</span>' : "") +
+      '<span class="cost">' + count(st.fill) + '/' + count(st.own) + ' held</span></div>' +
+      '<div class="kitslots">' + cols + '</div></div>';
+  });
+  document.getElementById("kitRows").innerHTML = html;
+}
+
+function renderShips(){
+  var html = "";
+  SHIPS.forEach(function(sh){
+    var bays = "", i, arr = S.cargo[sh.id];
+    for (i = 0; i < sh.slots; i++) { bays += slot("g-crate", arr[i], {cargo:sh.id, i:i}, null, 32); }
+    var stat = sh.debt ? "[D" + sh.debt + "] [U" + sh.up + "]" : "5 bays";
+    html += '<div class="ship" data-active="' + (S.ship === sh.id ? 1 : 0) + '">' +
+      '<div class="shiphead"><span class="rowlabel">' + sh.name + '</span>' +
+      '<span class="cost">' + stat + '</span>' +
+      '<span class="cost" style="margin-left:auto">' + count(arr) + '/' + sh.slots + '</span>' +
+      '<button type="button" class="shipsel" data-ship="' + sh.id + '">' +
+      (S.ship === sh.id ? "Flying" : "Fly") + '</button></div>' +
+      '<div class="bays">' + bays + '</div></div>';
+  });
+  document.getElementById("ships").innerHTML = html;
+}
+
+function renderBank(){
+  var html = "", segs = ["stock", "exp1", "exp2"];
+  BANK.forEach(function(b){
+    var row = "", si, i, arr = S.bank[b.id];
+    for (si = 0; si < 3; si++) {
+      var locked = (si === 1 && !S.up.exp1.own) || (si === 2 && !S.up.exp2.own);
+      var cells = "";
+      for (i = si * 3; i < si * 3 + 3; i++) { cells += slot("g-bit", arr[i], {bank:b.id, i:i}, null, 26); }
+      row += '<div class="seg" data-locked="' + (locked ? 1 : 0) + '" title="' + segs[si] + '">' + cells + '</div>';
+    }
+    html += '<div class="bankrow"><span class="rowlabel">' + b.name + '</span><div class="segs">' + row + '</div></div>';
+  });
+  document.getElementById("bank").innerHTML = html;
+  var c = BANK.map(function(b){ return count(S.bank[b.id]); });
+  var sets = Math.min(c[0], c[1], c[2]);
+  document.getElementById("bankTotal").innerHTML =
+    "O2 " + c[0] + " &middot; GR " + c[1] + " &middot; GE " + c[2] +
+    " &nbsp;&rarr;&nbsp; " + sets + " full set" + (sets === 1 ? "" : "s") + " = [" + sets + " cred]";
+}
+
+function renderYard(){
+  var html = "";
+  UPGRADES.forEach(function(u){
+    var st = S.up[u.id];
+    html += '<div class="lrow"><span class="name">' +
+      '<span class="rowlabel">' + u.name + '</span>' +
+      (u.dup ? '<small>second unit</small>' : "") +
+      (u.note ? '<small>' + u.note + '</small>' : "") + '</span>' +
+      '<span class="cell">' + slot("g-box", st.own, {up:u.id, part:"own"}, null, 26) +
+        '<span class="cost">[' + u.own + ']</span></span>' +
+      '<span class="cell">' + slot("g-box", st.active, {up:u.id, part:"active"}, null, 26) +
+        '<span class="cost">[' + u.up + ']</span></span></div>';
+  });
+  document.getElementById("upgrades").innerHTML = html;
+
+  html = "";
+  TOOLS.forEach(function(t){
+    var boxes = "", i;
+    for (i = 0; i < 4; i++) { boxes += slot("g-box", S.tools[t.id][i], {tool:t.id, i:i}, null, 26); }
+    html += '<div class="lrow"><span class="name rowlabel">' + t.name + '</span>' +
+      '<span class="boxset">' + boxes + '<span class="cost">[' + t.cost + ']</span></span></div>';
+  });
+  document.getElementById("tools").innerHTML = html;
+
+  html = "";
+  MARKET.forEach(function(m){
+    var extra = "";
+    if (m.ammo) {
+      var a = "", i;
+      for (i = 0; i < m.ammo; i++) { a += slot("g-box", S.ammo[i], {ammo:i}, null, 22); }
+      extra = '<small style="display:flex;align-items:center;gap:3px;margin-top:3px">Ammo ' + a + ' [3 for 3]</small>';
+    }
+    html += '<div class="lrow"><span class="name"><span class="rowlabel">' + m.name + '</span>' + extra + '</span>' +
+      '<span class="cell">' + slot("g-box", S.market[m.id], {mkt:m.id}, null, 26) +
+        '<span class="cost">[' + m.own + ']</span></span>' +
+      '<span class="cell"><span class="cost">[' + m.up + ']</span></span></div>';
+  });
+  document.getElementById("market").innerHTML = html;
+
+  html = "";
+  REGISTRIES.forEach(function(r){
+    var st = S.reg[r.id];
+    html += '<div class="lrow"><span class="name"><span class="rowlabel">' + r.name + '</span>' +
+      '<small>' + r.note + '</small></span>' +
+      '<span class="cell">' + slot("g-box", st.own, {reg:r.id, part:"own"}, null, 26) +
+        '<span class="cost">[' + r.own + ']</span></span>' +
+      '<span class="cell">' + slot("g-box", st.active, {reg:r.id, part:"active"}, null, 26) +
+        '<span class="cost">[' + r.up + ']</span></span></div>';
+  });
+  document.getElementById("registries").innerHTML = html;
+}
+
+function renderReadout(){
+  var cred = S.credOnes + S.credTens * 10;
+  var ship = SHIPS.filter(function(s){ return s.id === S.ship; })[0] || SHIPS[0];
+  var load = count(S.cargo[ship.id]);
+  var due = ship.up;
+  UPGRADES.forEach(function(u){ if (S.up[u.id].active) { due += u.up; } });
+  REGISTRIES.forEach(function(r){ if (S.reg[r.id].active) { due += r.up; } });
+  MARKET.forEach(function(m){ if (S.market[m.id]) { due += m.up; } });
+  due = Math.max(0, due - S.inv);
+
+  document.getElementById("roCred").textContent = cred;
+  document.getElementById("roLoad").textContent = load + "/" + ship.slots;
+  var upEl = document.getElementById("roUp");
+  var paid = S.upOnes + S.upTens * 10;
+  upEl.textContent = due;
+  upEl.className = (due > paid) ? "warn" : "";
+  var dEl = document.getElementById("roDebt");
+  dEl.textContent = S.debt;
+  dEl.className = (S.debt >= 9) ? "warn" : "";
+}
+
+function renderAll(){
+  renderGas(); renderStatus(); renderKit(); renderShips(); renderBank(); renderYard(); renderReadout();
+}
+
+/* ---------- tabs ---------- */
+var PANES = [
+  {id:"status", label:"Status"},
+  {id:"kit",    label:"Kit"},
+  {id:"ship",   label:"Ship"},
+  {id:"yard",   label:"Yard"},
+  {id:"run",    label:"Run"},
+  {id:"log",    label:"Log"}
+];
+document.getElementById("tabs").innerHTML = PANES.map(function(p, i){
+  return '<button type="button" class="tab" role="tab" data-pane="' + p.id + '" aria-selected="' +
+    (i === 0 ? "true" : "false") + '">' + p.label + '</button>';
+}).join("");
+
+function showPane(id){
+  PANES.forEach(function(p){
+    document.getElementById("pane-" + p.id).classList.toggle("on", p.id === id);
+  });
+  Array.prototype.forEach.call(document.querySelectorAll(".tab"), function(t){
+    t.setAttribute("aria-selected", t.dataset.pane === id ? "true" : "false");
+  });
+  window.scrollTo(0, 0);
+}
+
+/* ---------- input ---------- */
+document.addEventListener("click", function(ev){
+  var t = ev.target.closest("button");
+  if (!t) { return; }
+  var d = t.dataset;
+
+  if (d.pane) { showPane(d.pane); return; }
+
+  if (d.gas) {
+    var g = parseInt(d.gas, 10);
+    S.gas = (S.gas === g) ? g - 1 : g;
+    renderGas(); save(); return;
+  }
+  if (d.ctr) {
+    var i = parseInt(d.i, 10);
+    S[d.ctr] = (S[d.ctr] === i + 1) ? i : i + 1;
+    renderStatus(); renderReadout(); save(); return;
+  }
+  if (d.kit) {
+    var st = S.kit[d.kit], k = parseInt(d.i, 10);
+    if (d.part === "own") {
+      st.own[k] = st.own[k] ? 0 : 1;
+      if (!st.own[k]) { st.fill[k] = 0; }
+    } else {
+      if (!st.own[k]) { st.own[k] = 1; }
+      st.fill[k] = st.fill[k] ? 0 : 1;
+    }
+    renderKit(); save(); return;
+  }
+  if (d.cargo) {
+    var arr = S.cargo[d.cargo], c = parseInt(d.i, 10);
+    arr[c] = arr[c] ? 0 : 1;
+    renderShips(); renderReadout(); save(); return;
+  }
+  if (d.ship) { S.ship = d.ship; renderShips(); renderReadout(); save(); return; }
+  if (d.bank) {
+    var b = S.bank[d.bank], n = parseInt(d.i, 10);
+    b[n] = b[n] ? 0 : 1;
+    renderBank(); save(); return;
+  }
+  if (d.up) {
+    var u = S.up[d.up];
+    u[d.part] = u[d.part] ? 0 : 1;
+    if (d.part === "own" && !u.own) { u.active = 0; }
+    if (d.part === "active" && u.active) { u.own = 1; }
+    renderYard(); renderBank(); renderReadout(); save(); return;
+  }
+  if (d.tool) {
+    var tl = S.tools[d.tool], ti = parseInt(d.i, 10);
+    fillTo(tl, ti);
+    renderYard(); save(); return;
+  }
+  if (d.mkt) { S.market[d.mkt] = S.market[d.mkt] ? 0 : 1; renderYard(); renderReadout(); save(); return; }
+  if (d.ammo !== undefined) {
+    var ai = parseInt(d.ammo, 10);
+    fillTo(S.ammo, ai);
+    renderYard(); save(); return;
+  }
+  if (d.reg) {
+    var r = S.reg[d.reg];
+    r[d.part] = r[d.part] ? 0 : 1;
+    if (d.part === "own" && !r.own) { r.active = 0; }
+    if (d.part === "active" && r.active) { r.own = 1; }
+    renderYard(); renderReadout(); save(); return;
+  }
+  if (d.roll) { roll(parseInt(d.roll, 10)); return; }
+});
+
+/* ---------- dice ---------- */
+var out = document.getElementById("rollOut");
+function d6(){ return 1 + Math.floor(Math.random() * 6); }
+function roll(n){
+  var a = d6(), b = n === 2 ? d6() : null;
+  var best = b === null ? a : Math.max(a, b);
+  var pips = b === null ? String(a)
+    : (best === a ? '<span>' + a + '</span> <span class="dim">' + b + '</span>'
+                  : '<span class="dim">' + a + '</span> <span>' + b + '</span>');
+  var verdict, cls;
+  if (best >= 6) { verdict = "Strong hit"; cls = "hit"; }
+  else if (best >= 4) { verdict = "Weak hit"; cls = "hit"; }
+  else { verdict = "Miss &mdash; spend Grit for a 4/5"; cls = "miss"; }
+  out.innerHTML = '<div class="pips">' + pips + '</div><div class="verdict ' + cls + '">' + verdict + '</div>';
+  out.classList.remove("rolling");
+  void out.offsetWidth;
+  out.classList.add("rolling");
+}
+
+/* ---------- text fields ---------- */
+var idField = document.getElementById("belterId");
+var notesField = document.getElementById("notes");
+idField.value = S.id;
+notesField.value = S.notes;
+idField.addEventListener("input", function(){ S.id = idField.value; save(); });
+notesField.addEventListener("input", function(){ S.notes = notesField.value; save(); });
+
+document.getElementById("wipe").addEventListener("click", function(){
+  if (!window.confirm("Wipe this Belter and start clean? This can't be undone.")) { return; }
+  S = blank();
+  idField.value = "";
+  notesField.value = "";
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  renderAll();
+  showPane("status");
+});
+
+renderAll();
+</script>
+
+</body>
+</html>
